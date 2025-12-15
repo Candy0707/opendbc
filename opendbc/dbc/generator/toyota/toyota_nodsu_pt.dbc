@@ -1,6 +1,7 @@
 CM_ "IMPORT _community.dbc";
 CM_ "IMPORT _toyota_2017.dbc";
 CM_ "IMPORT _toyota_adas_standard.dbc";
+CM_ "IMPORT _toyota_debug.dbc";
 
 BO_ 401 STEERING_LTA: 8 XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
@@ -19,7 +20,11 @@ BO_ 401 STEERING_LTA: 8 XXX
 BO_ 550 BRAKE_MODULE: 8 XXX
  SG_ BRAKE_PRESSURE : 0|9@0+ (1,0) [0|511] "" XXX
  SG_ BRAKE_POSITION : 16|9@0+ (1,0) [0|511] "" XXX
+ SG_ unknown_ACTIVE1 : 22|1@0+ (1,0) [0|1] "" XXX
+ SG_ unknown_ACTIVE2 : 36|1@0+ (1,0) [0|1] "" XXX
  SG_ BRAKE_PRESSED : 37|1@0+ (1,0) [0|1] "" XXX
+ SG_ unknown_ACTIVE3 : 59|1@0+ (1,0) [0|1] "" XXX
+ SG_ unknown_ACTIVE4 : 60|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 610 EPS_STATUS: 8 EPS
  SG_ IPAS_STATE : 3|4@0+ (1,0) [0|15] "" XXX
@@ -28,15 +33,81 @@ BO_ 610 EPS_STATUS: 8 EPS
  SG_ TYPE : 24|1@0+ (1,0) [0|1] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
+ BO_ 713 unknown: 8 CGW
+ SG_ CRUISE_STATE : 5|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_1 : 15|16@0- (1,0) [0|65535] "N" XXX
+ SG_ NEUTRAL_FORCE : 31|16@0- (2,0) [0|65535] "N" XXX
+ SG_ ECO : 47|16@0- (0.1,0) [0|1023] "%" XXX
+ SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
+
+BO_ 728 LIGHT_OPERATE: 8 BCM
+ SG_ BEAM : 9|2@0+ (1,0) [0|1] "" XXX
+ SG_ LIGHT_OPERATE : 12|2@0+ (1,0) [0|3] "" XXX
+ SG_ FRONT_FOG_PRESS : 16|1@0+ (1,0) [0|1] "" XXX
+ SG_ REAR_FOG_PRESS : 17|1@0+ (1,0) [0|1] "" XXX
+ SG_ HIGH_BEAM_PRESS : 20|1@0+ (1,0) [0|1] "" XXX
+ SG_ HIGH_BEAM_DIAL : 21|1@0+ (1,0) [0|1] "" XXX
+ SG_ TURN_DIAL : 41|2@0+ (1,0) [0|3] "" XXX
+ SG_ TURN_PRESS : 43|2@0+ (1,0) [0|3] "" XXX
+
 BO_ 881 LTA_RELATED: 8 FCM
  SG_ GAS_PEDAL : 15|8@0+ (0.005,0) [0|1] "" XXX
  SG_ STEER_ANGLE : 23|16@0- (0.0573,0) [-500|500] "" XXX
+ SG_ TURN_R_LIGHT : 25|2@0+ (1,0) [0|3] "" XXX
+ SG_ TURN_L_LIGHT : 27|2@0+ (1,0) [0|3] "" XXX
  SG_ TURN_SIGNALS : 35|2@0+ (1,0) [0|3] "" XXX
  SG_ UNKNOWN_2 : 58|1@0+ (1,0) [0|1] "" XXX
  SG_ LDA_SA_TOGGLE : 59|1@0+ (1,0) [0|1] "" XXX
  SG_ LTA_STEER_REQUEST : 60|1@0+ (1,0) [0|1] "" XXX
  SG_ UNKNOWN : 61|1@0+ (1,0) [0|1] "" XXX
  SG_ STEERING_PRESSED : 63|1@0+ (1,0) [0|1] "" XXX
+
+BO_ 896 AIR_CONDITIONER_ECU: 8 HVAC
+ SG_ POWER : 1|1@0+ (1,0) [0|1] "" XXX
+ SG_ Heating : 5|1@0+ (1,0) [0|1] "" XXX
+ SG_ OutsideAir : 20|1@0+ (1,0) [0|1] "" XXX
+ SG_ Compressor : 21|1@0+ (1,0) [0|1] "" XXX
+ SG_ FAN_MAX : 23|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_1 : 55|8@0- (1,1) [0|255] "" XXX
+
+BO_ 918 NEW_MSG_396: 7 CS
+ SG_ NEW_SIGNAL_2 : 1|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_1 : 22|3@0+ (1,0) [0|7] "" XXX
+
+BO_ 945 AIR_CONDITIONER_4: 8 HVAC
+
+BO_ 953 ENGINE_TEMP: 8 ECM
+ SG_ Oil_Temp : 7|8@0+ (0.5,0) [0|255] "°C" XXX
+ SG_ CoolingTemp : 47|8@0+ (1,0) [0|255] "°C" XXX
+
+BO_ 955 ESP_STATE: 8 ESP
+ SG_ BRAKE : 0|1@0+ (1,0) [0|1] "" XXX
+ SG_ CRUISE_STATE : 31|1@0+ (1,0) [0|1] "" XXX
+ SG_ BOS_FAIL : 32|1@0+ (1,0) [0|1] "" XXX
+ SG_ ABS_FAIL : 34|1@0+ (1,0) [0|1] "" XXX
+ SG_ VSC_FAIL : 35|1@0+ (1,0) [0|1] "" XXX
+ SG_ ECB_FAIL : 36|1@0+ (1,0) [0|1] "" XXX
+ SG_ BOS_ACTIVE : 37|1@0+ (1,0) [0|1] "" XXX
+ SG_ TRC_FAIL : 43|1@0+ (1,0) [0|1] "" XXX
+
+BO_ 971 NEW_MSG_3CB: 7 XXX
+ SG_ SPEED : 0|9@0- (1,0) [0|511] "" XXX
+ SG_ UNKNOWN_1 : 39|8@0+ (1,0) [0|255] "" XXX
+ SG_ UNKNOWN_2 : 47|8@0+ (1,0) [0|255] "" XXX
+ SG_ CHECKSUM : 55|8@0+ (1,0) [0|255] "" XXX
+
+BO_ 987 Parking_Radar: 8 CS
+ SG_ L_Distance : 28|3@0+ (1,0) [0|7] "" XXX
+ SG_ R_Distance : 31|3@0+ (1,0) [0|7] "" XXX
+ SG_ L : 33|2@0+ (1,0) [0|1] "" XXX
+ SG_ R : 35|2@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_1 : 41|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_2 : 45|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_3 : 47|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_5 : 49|1@0+ (1,0) [0|1] "" XXX
+ SG_ ALERT_Volume : 53|2@0+ (1,0) [0|3] "" XXX
+ SG_ RADAR_ENABLED : 55|1@0+ (1,0) [0|1] "" XXX
+ SG_ NEW_SIGNAL_4 : 63|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1014 BSM: 8 XXX
  SG_ L_ADJACENT : 0|1@0+ (1,0) [0|1] "" XXX
@@ -45,6 +116,8 @@ BO_ 1014 BSM: 8 XXX
  SG_ R_APPROACHING : 10|1@0+ (1,0) [0|1] "" XXX
  SG_ ADJACENT_ENABLED : 7|1@0+ (1,0) [0|1] "" XXX
  SG_ APPROACHING_ENABLED : 15|1@0+ (1,0) [0|1] "" XXX
+ SG_ R_LIGHT : 25|2@0+ (1,0) [0|3] "" XXX
+ SG_ L_LIGHT : 27|2@0+ (1,0) [0|3] "" XXX
 
 CM_ SG_ 401 PERCENTAGE "driver override percentage (0-100), very close to steeringPressed in OP";
 CM_ SG_ 401 TORQUE_WIND_DOWN "used to wind down torque on user override";
@@ -77,3 +150,17 @@ VAL_ 401 SETME_X3 3 "TSS 2.0" 1 "TSS 2.5 or 2022 RAV4" 0 "TSS 2.0 on Alphard, Hi
 VAL_ 610 IPAS_STATE 5 "override" 3 "enabled" 1 "disabled";
 VAL_ 610 LKA_STATE 25 "temporary_fault" 17 "permanent_fault" 11 "lka_missing_unavailable2" 9 "temporary_fault2" 5 "active" 3 "lka_missing_unavailable" 1 "standby";
 VAL_ 610 LTA_STATE 25 "temporary_fault" 9 "temporary_fault2" 5 "active" 3 "lta_missing_unavailable" 1 "standby";
+VAL_ 728 BEAM 1 "OFF" 2 "Auto";
+VAL_ 728 LIGHT_OPERATE 1 "TAIL" 2 "BEAM" 0 "OFF or Auto";
+VAL_ 728 TURN_DIAL 0 "None" 1 "Right" 2 "Left";
+VAL_ 728 TURN_PRESS 0 "None" 1 "Right" 2 "Left";
+VAL_ 881 TURN_SIGNALS 0 "None" 1 "TurnRight" 2 "TurnLeft" 3 "None";
+VAL_ 896 POWER 0 "OFF" 1 "ON";
+VAL_ 896 Compressor 0 "OFF" 1 "ON";
+VAL_ 987 ALERT_Volume 1 "Medium" 2 "High" 0 "Low";
+VAL_ 987 RADAR_ENABLED 0 "Close" 1 "Open";
+VAL_ 987 L 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
+VAL_ 987 R 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
+VAL_ 881 TURN_SIGNALS 0 "None" 1 "TurnRight" 2 "TurnLeft" 3 "None";
+VAL_ 1014 R_LIGHT 0 "OFF" 1 "ON" 2 "Flash";
+VAL_ 1014 L_LIGHT 0 "OFF" 1 "ON" 2 "Flash";

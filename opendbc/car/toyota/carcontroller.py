@@ -13,6 +13,7 @@ from opendbc.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, T
                                         CarControllerParams, ToyotaFlags, \
                                         UNSUPPORTED_DSU_CAR
 from opendbc.can import CANPacker
+from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
 from opendbc.sunnypilot.car.toyota.secoc_long import SecOCLongCarController
@@ -21,6 +22,7 @@ Ecu = structs.CarParams.Ecu
 LongCtrlState = structs.CarControl.Actuators.LongControlState
 SteerControlType = structs.CarParams.SteerControlType
 VisualAlert = structs.CarControl.HUDControl.VisualAlert
+GearShifter = structs.CarState.GearShifter
 
 # The up limit allows the brakes/gas to unwind quickly leaving a stop,
 # the down limit roughly matches the rate of ACCEL_NET, reducing PCM compensation windup
@@ -41,8 +43,12 @@ MAX_USER_TORQUE = 500
 
 def get_long_tune(CP, params):
   if CP.carFingerprint in TSS2_CAR:
-    kiBP = [2., 5.]
-    kiV = [0.5, 0.25]
+    if CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2:
+      kiBP = [2.0,  6.0,  12.,  27.]
+      kiV = [0.47, 0.27,  0.215, 0.1]
+    else:
+      kiBP = [2., 5.]
+      kiV = [0.5, 0.25]
   else:
     kiBP = [0., 5., 35.]
     kiV = [3.6, 2.4, 1.5]
@@ -82,6 +88,13 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     self.secoc_lka_message_counter = 0
     self.secoc_lta_message_counter = 0
     self.secoc_prev_reset_counter = 0
+
+    if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      self.brake_hold_active: bool = False
+      self._brake_hold_counter: int = 0
+      self._brake_hold_reset: bool = False
+      self._prev_brake_pressed: bool = False
+      self._speed_gear_lock = False
 
   def update(self, CC, CC_SP, CS, now_nanos):
     actuators = CC.actuators
@@ -185,6 +198,9 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
 
     self.last_standstill = CS.out.standstill
 
+    if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      can_sends.extend(self.create_auto_brake_hold_messages(CS))
+
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
     steer_alert = hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw)
@@ -255,11 +271,12 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
         elif net_acceleration_request_min > 0.3:
           self.permit_braking = False
 
+        acc_type = 1 if self.CP.carFingerprint in TSS2_CAR else CS.acc_type
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
 
         can_sends.append(toyotacan.create_accel_command(self.packer, pcm_accel_cmd, pcm_cancel_cmd, self.permit_braking, self.standstill_req, lead,
-                                                        CS.acc_type, fcw_alert, self.distance_button, self.SECOC_LONG))
+                                                        acc_type, fcw_alert, self.distance_button, self.SECOC_LONG))
         self.accel = pcm_accel_cmd
 
     else:
@@ -290,7 +307,7 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
       if self.frame % 20 == 0 or send_ui:
         can_sends.append(toyotacan.create_ui_command(self.packer, steer_alert, pcm_cancel_cmd, hud_control.leftLaneVisible,
                                                      hud_control.rightLaneVisible, hud_control.leftLaneDepart,
-                                                     hud_control.rightLaneDepart, CC.latActive, CS.lkas_hud))
+                                                     hud_control.rightLaneDepart, CC.latActive, CC_SP.mads, CS.lkas_hud))
 
       if (self.frame % 100 == 0 or send_ui) and (self.CP.enableDsu or self.CP.flags & ToyotaFlags.DISABLE_RADAR.value):
         can_sends.append(toyotacan.create_fcw_command(self.packer, fcw_alert))
@@ -314,3 +331,33 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
 
     self.frame += 1
     return new_actuators, can_sends
+
+# auto brake hold (https://github.com/AlexandreSato/)
+  def create_auto_brake_hold_messages(self, CS: structs.CarState, brake_hold_allowed_timer: int = 100):
+    can_sends = []
+
+    if CS.out.gearShifter == GearShifter.drive:
+      if CS.out.vEgo > 18:
+        self._speed_gear_lock = True
+    else:
+      self._speed_gear_lock = False
+
+    #車輛禁止是最高條件
+    brake_hold_allowed = CS.out.standstill and \
+                        (not CS.out.gasPressed and self._speed_gear_lock) or \
+                        (CS.out.cruiseState.enabled and self.accel <= 0)
+
+    if brake_hold_allowed:
+      self._brake_hold_counter += 1
+      self.brake_hold_active = self._brake_hold_counter > brake_hold_allowed_timer and not self._brake_hold_reset
+      self._brake_hold_reset = not self._prev_brake_pressed and CS.out.brakePressed and not self._brake_hold_reset
+    else:
+      self._brake_hold_counter = 0
+      self.brake_hold_active = False
+      self._brake_hold_reset = False
+    self._prev_brake_pressed = CS.out.brakePressed
+
+    if self.frame % 2 == 0:
+      can_sends.append(toyotacan.create_brake_hold_command(self.packer, self.frame, CS.pre_collision_2, self.brake_hold_active))
+
+    return can_sends

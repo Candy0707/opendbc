@@ -36,8 +36,11 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    if candidate in ANGLE_CONTROL_CAR:
-      ret.steerControlType = SteerControlType.angle
+    #自動偵測是否支援角度控制
+    #if candidate in ANGLE_CONTROL_CAR:
+    ret.steerControlType = SteerControlType.angle if 0x191 in fingerprint[0] else SteerControlType.torque
+    if ret.steerControlType == SteerControlType.angle:
+      ret.flags |= ToyotaFlags.ANGLE_CONTROL
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
       # LTA control can be more delayed and winds up more often
@@ -142,8 +145,9 @@ class CarInterface(CarInterfaceBase):
       ret.flags |= ToyotaFlags.RAISED_ACCEL_LIMIT.value
 
       ret.vEgoStopping = 0.25
-      ret.vEgoStarting = 0.25
-      ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
+      ret.vEgoStarting = 0.10 if candidate in CAR.TOYOTA_COROLLA_TSS2 else 0.25
+      # reach stopping target smoothly
+      ret.stoppingDecelRate = 0.03 if candidate in CAR.TOYOTA_COROLLA_TSS2 else 0.3
 
       # Hybrids have much quicker longitudinal actuator response
       if ret.flags & ToyotaFlags.HYBRID.value:

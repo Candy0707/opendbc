@@ -82,6 +82,39 @@ def create_pcs_commands(packer, accel, active, mass):
 
   return [msg1, msg2]
 
+# auto brake hold
+def create_brake_hold_command(packer, frame, pre_collision_2, brake_hold_active):
+  # forward PRE_COLLISION_2 when auto brake hold is not active
+  values = {s: pre_collision_2[s] for s in [
+    "DSS1GDRV",
+    "DS1STAT2",
+    "DS1STBK2",
+    "PCSWAR",
+    "PCSALM",
+    "PCSOPR",
+    "PCSABK",
+    "PBATRGR",
+    "PPTRGR",
+    "IBTRGR",
+    "CLEXTRGR",
+    "IRLT_REQ",
+    "BRKHLD",
+    "AVSTRGR",
+    "VGRSTRGR",
+    "PREFILL",
+    "PBRTRGR",
+    "PCSDIS",
+    "PBPREPMP",
+  ]}
+
+  if brake_hold_active:
+    values = {
+      "DSS1GDRV": 0x3FF,
+      "PBRTRGR": frame % 730 < 727,  # cut actuation for 3 frames
+    }
+
+  return packer.make_can_msg("PRE_COLLISION_2", 0, values)
+
 
 def create_acc_cancel_command(packer):
   values = {
@@ -107,48 +140,51 @@ def create_fcw_command(packer, fcw):
   return packer.make_can_msg("PCS_HUD", 0, values)
 
 
-def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, enabled, stock_lkas_hud):
+def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, mads, stock_lkas_hud):
+  depart_ALERT = left_lane_depart or right_lane_depart or (mads.enabled and not mads.active)
   values = {
     "TWO_BEEPS": chime,
     "LDA_ALERT": steer,
     "RIGHT_LINE": 3 if right_lane_depart else 1 if right_line else 2,
     "LEFT_LINE": 3 if left_lane_depart else 1 if left_line else 2,
-    "BARRIERS": 1 if enabled else 0,
+    "BARRIERS": mads.active,
+    "LKAS_STATUS": 3 if depart_ALERT else 2 if mads.enabled else 1 if mads.available else 0,
 
     # static signals
-    "SET_ME_X02": 2,
     "SET_ME_X01": 1,
-    "LKAS_STATUS": 1,
+    "SET_ME_X02": 2,
+    "TAKE_CONTROL": 0,
     "REPEATED_BEEPS": 0,
     "LANE_SWAY_FLD": 7,
     "LANE_SWAY_BUZZER": 0,
     "LANE_SWAY_WARNING": 0,
-    "LDA_FRONT_CAMERA_BLOCKED": 0,
-    "TAKE_CONTROL": 0,
     "LANE_SWAY_SENSITIVITY": 2,
-    "LANE_SWAY_TOGGLE": 1,
     "LDA_ON_MESSAGE": 0,
-    "LDA_MESSAGES": 0,
     "LDA_SA_TOGGLE": 1,
+    "LDA_MESSAGES": 0,
     "LDA_SENSITIVITY": 2,
     "LDA_UNAVAILABLE": 0,
     "LDA_MALFUNCTION": 0,
     "LDA_UNAVAILABLE_QUIET": 0,
+    "LDA_FRONT_CAMERA_BLOCKED": 0,
     "ADJUSTING_CAMERA": 0,
     "LDW_EXIST": 1,
   }
-
   # lane sway functionality
   # not all cars have LKAS_HUD — update with camera values if available
   if len(stock_lkas_hud):
     values.update({s: stock_lkas_hud[s] for s in [
+      "SET_ME_X02",
+      "LDA_SA_TOGGLE",
+      "LDA_ON_MESSAGE",
+      "LDA_FRONT_CAMERA_BLOCKED",
+      "LANE_SWAY_TOGGLE",
       "LANE_SWAY_FLD",
       "LANE_SWAY_BUZZER",
       "LANE_SWAY_WARNING",
       "LANE_SWAY_SENSITIVITY",
       "LANE_SWAY_TOGGLE",
     ]})
-
   return packer.make_can_msg("LKAS_HUD", 0, values)
 
 

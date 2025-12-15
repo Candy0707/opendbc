@@ -174,14 +174,18 @@ class CarState(CarStateBase, CarStateExt):
     ret.espDisabled = cp.vl["ESP_CONTROL"]["TC_DISABLED"] != 0
 
     if self.CP.enableBsm:
-      ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1)
-      ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1)
+      ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1) or (cp.vl["BSM"]["R_LIGHT "] > 0)
+      ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1) or (cp.vl["BSM"]["L_LIGHT "] > 0)
 
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
+
+    if cp_acc.vl["ACC_CONTROL"]["ACC_TYPE"] == 2 or cp_acc.vl["PCM_CRUISE_2"]["LOW_SPEED_LOCKOUT"] == 2:
+      if not self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+        self.CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD
 
     buttonEvents = []
     prev_distance_button = self.distance_button
