@@ -338,7 +338,7 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     can_sends = []
 
     if CS.out.gearShifter == GearShifter.drive:
-      if CS.out.vEgo > 18:
+      if CS.out.vEgo > 5.:
         self._speed_gear_lock = True
     else:
       self._speed_gear_lock = False
