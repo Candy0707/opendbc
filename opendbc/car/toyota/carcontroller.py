@@ -89,12 +89,11 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     self.secoc_lta_message_counter = 0
     self.secoc_prev_reset_counter = 0
 
-    if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      self.brake_hold_active: bool = False
-      self._brake_hold_counter: int = 0
-      self._brake_hold_reset: bool = False
-      self._prev_brake_pressed: bool = False
-      self._speed_gear_lock = False
+    self.brake_hold_active: bool = False
+    self._brake_hold_counter: int = 0
+    self._brake_hold_reset: bool = False
+    self._prev_brake_pressed: bool = False
+    self._speed_gear_lock = False
 
   def update(self, CC, CC_SP, CS, now_nanos):
     actuators = CC.actuators

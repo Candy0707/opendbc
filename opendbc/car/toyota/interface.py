@@ -40,7 +40,7 @@ class CarInterface(CarInterfaceBase):
     #if candidate in ANGLE_CONTROL_CAR:
     ret.steerControlType = SteerControlType.angle if 0x191 in fingerprint[0] else SteerControlType.torque
     if ret.steerControlType == SteerControlType.angle:
-      ret.flags |= ToyotaFlags.ANGLE_CONTROL
+      ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
       # LTA control can be more delayed and winds up more often

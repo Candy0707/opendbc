@@ -2,6 +2,7 @@ import copy
 
 from opendbc.can import CANDefine, CANParser
 from opendbc.car import Bus, DT_CTRL, create_button_events, structs
+from opendbc.car.carlog import carlog
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.common.filter_simple import FirstOrderFilter
 from opendbc.car.interfaces import CarStateBase
@@ -54,6 +55,8 @@ class CarState(CarStateBase, CarStateExt):
     self.lkas_hud = {}
     self.gvc = 0.0
     self.secoc_synchronization = None
+
+    self.CS.pre_collision_2 = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
@@ -174,15 +177,16 @@ class CarState(CarStateBase, CarStateExt):
     ret.espDisabled = cp.vl["ESP_CONTROL"]["TC_DISABLED"] != 0
 
     if self.CP.enableBsm:
-      ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1) or (cp.vl["BSM"]["R_LIGHT "] > 0)
-      ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1) or (cp.vl["BSM"]["L_LIGHT "] > 0)
-
+      #嘗試使用 BSM 燈光作為參考
+      ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1) or (cp.vl["BSM"]["L_LIGHT"] > 0)
+      ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1) or (cp.vl["BSM"]["R_LIGHT"] > 0)
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
 
+    #如果有低速鎖定，代表沒有電子手煞車，啟用Auto Brake Hold
     if cp_acc.vl["ACC_CONTROL"]["ACC_TYPE"] == 2 or cp_acc.vl["PCM_CRUISE_2"]["LOW_SPEED_LOCKOUT"] == 2:
       if not self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
         self.CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD
@@ -210,6 +214,8 @@ class CarState(CarStateBase, CarStateExt):
       buttonEvents += create_button_events(self.distance_button, prev_distance_button, {1: ButtonType.gapAdjustCruise})
 
     ret.buttonEvents = buttonEvents
+
+    self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 
