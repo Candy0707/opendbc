@@ -110,7 +110,7 @@ def create_brake_hold_command(packer, frame, pre_collision_2, brake_hold_active)
   if brake_hold_active:
     values = {
       "DSS1GDRV": 0x3FF,
-      "PBRTRGR": frame % 730 < 727,  # cut actuation for 3 frames
+      "PBRTRGR": frame % 730 < 728,  # cut actuation for 3 frames
     }
 
   return packer.make_can_msg("PRE_COLLISION_2", 0, values)
@@ -141,14 +141,14 @@ def create_fcw_command(packer, fcw):
 
 
 def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, mads, stock_lkas_hud):
-  depart_ALERT = left_lane_depart or right_lane_depart or (mads.enabled and not mads.active)
+  depart_ALERT = left_lane_depart or right_lane_depart
   values = {
     "TWO_BEEPS": chime,
     "LDA_ALERT": steer,
     "RIGHT_LINE": 3 if right_lane_depart else 1 if right_line else 2,
     "LEFT_LINE": 3 if left_lane_depart else 1 if left_line else 2,
     "BARRIERS": mads.active,
-    "LKAS_STATUS": 3 if depart_ALERT else 2 if mads.enabled else 1 if mads.available else 0,
+    "LKAS_STATUS": 3 if depart_ALERT else 2 if mads.active else 1 if mads.enabled else 0,
 
     # static signals
     "SET_ME_X01": 1,

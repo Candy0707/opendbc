@@ -89,11 +89,12 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     self.secoc_lta_message_counter = 0
     self.secoc_prev_reset_counter = 0
 
-    self.brake_hold_active: bool = False
-    self._brake_hold_counter: int = 0
-    self._brake_hold_reset: bool = False
-    self._prev_brake_pressed: bool = False
-    self._speed_gear_lock = False
+    if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      self.brake_hold_active: bool = False
+      self._brake_hold_counter: int = 0
+      self._brake_hold_reset: bool = False
+      self._prev_brake_pressed: bool = False
+      self._speed_gear_lock = False
 
   def update(self, CC, CC_SP, CS, now_nanos):
     actuators = CC.actuators
@@ -198,7 +199,7 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     self.last_standstill = CS.out.standstill
 
     if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      can_sends.extend(self.create_auto_brake_hold_messages(CS))
+      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -333,8 +334,10 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     return new_actuators, can_sends
 
 # auto brake hold (https://github.com/AlexandreSato/)
-  def create_auto_brake_hold_messages(self, CS: structs.CarState, brake_hold_allowed_timer: int = 100):
+  def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
+
+    stopping = CC.actuators.longControlState == LongCtrlState.stopping
 
     if CS.out.gearShifter == GearShifter.drive:
       if CS.out.vEgo > 5.:
@@ -343,9 +346,15 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
       self._speed_gear_lock = False
 
     #車輛禁止是最高條件
-    brake_hold_allowed = CS.out.cruiseState.available and \
-                        CS.out.standstill and not CS.out.gasPressed and \
-                        self._speed_gear_lock
+    standstill_ok = CS.out.standstill and not CS.out.gasPressed
+    #ACC模式輸出停止時
+    acc_mode_ok = CS.out.cruiseState.enabled and stopping
+    #手動模式 車速 > 5 m/s 與 檔位 D 鎖定
+    manual_mode_ok = not CS.out.cruiseState.enabled and self._speed_gear_lock
+
+    #煞車許可
+    brake_hold_allowed = standstill_ok and (acc_mode_ok or manual_mode_ok)
+
 
     if brake_hold_allowed:
       self._brake_hold_counter += 1
