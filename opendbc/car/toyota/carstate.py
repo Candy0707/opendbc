@@ -2,7 +2,6 @@ import copy
 
 from opendbc.can import CANDefine, CANParser
 from opendbc.car import Bus, DT_CTRL, create_button_events, structs
-from opendbc.car.carlog import carlog
 from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.common.filter_simple import FirstOrderFilter
 from opendbc.car.interfaces import CarStateBase
@@ -56,7 +55,7 @@ class CarState(CarStateBase, CarStateExt):
     self.gvc = 0.0
     self.secoc_synchronization = None
 
-    self.CS.pre_collision_2 = {}
+    self.pre_collision_2 = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
@@ -185,11 +184,6 @@ class CarState(CarStateBase, CarStateExt):
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
-
-    #如果有低速鎖定，代表沒有電子手煞車，啟用Auto Brake Hold
-    if cp_acc.vl["ACC_CONTROL"]["ACC_TYPE"] == 2 or cp_acc.vl["PCM_CRUISE_2"]["LOW_SPEED_LOCKOUT"] == 2:
-      if not self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-        self.CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD
 
     buttonEvents = []
     prev_distance_button = self.distance_button

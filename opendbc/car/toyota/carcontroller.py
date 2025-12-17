@@ -343,9 +343,9 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
       self._speed_gear_lock = False
 
     #車輛禁止是最高條件
-    brake_hold_allowed = CS.out.standstill and \
-                        (not CS.out.gasPressed and self._speed_gear_lock) or \
-                        (CS.out.cruiseState.enabled and self.accel <= 0)
+    brake_hold_allowed = CS.out.cruiseState.available and \
+                        CS.out.standstill and not CS.out.gasPressed and \
+                        self._speed_gear_lock
 
     if brake_hold_allowed:
       self._brake_hold_counter += 1
