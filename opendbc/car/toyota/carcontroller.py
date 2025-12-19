@@ -336,6 +336,7 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
 
+    cruiseState = CS.out.cruiseState.enabled
     stopping = CC.actuators.longControlState == LongCtrlState.stopping
 
     #檔位D鎖定邏輯
@@ -345,10 +346,14 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     elif CS.out.vEgo > 5.:
       self._speed_gear_lock = True
 
-    brake_hold_allowed = CS.out.standstill and \
-                     not CS.out.gasPressed and \
-                     not CS.out.cruiseState.enabled and \
-                     self._speed_gear_lock
+    standstill_ok = CS.out.standstill and not CS.out.gasPressed
+
+    cruise_enabled = cruiseState and stopping
+
+    cruise_disabled = not cruiseState and self._speed_gear_lock
+
+    brake_hold_allowed =  standstill_ok and (cruise_enabled or cruise_disabled)
+
 
     if brake_hold_allowed:
       self._brake_hold_counter += 1
