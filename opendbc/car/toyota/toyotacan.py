@@ -109,8 +109,8 @@ def create_brake_hold_command(packer, frame, pre_collision_2, brake_hold_active)
 
   if brake_hold_active:
     values = {
-      "DSS1GDRV": 0x3FF,
-      "PBRTRGR": frame % 1000 < 998,  # cut actuation for 3 frames
+      "DSS1GDRV": 0x3FE,
+      "PBRTRGR": frame % 700 < 798,  # cut actuation for 3 frames
     }
 
   return packer.make_can_msg("PRE_COLLISION_2", 0, values)

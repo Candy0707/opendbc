@@ -271,12 +271,11 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
         elif net_acceleration_request_min > 0.3:
           self.permit_braking = False
 
-        acc_type = 1 if self.CP.carFingerprint in TSS2_CAR else CS.acc_type
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
 
         can_sends.append(toyotacan.create_accel_command(self.packer, pcm_accel_cmd, pcm_cancel_cmd, self.permit_braking, self.standstill_req, lead,
-                                                        acc_type, fcw_alert, self.distance_button, self.SECOC_LONG))
+                                                        CS.acc_type, fcw_alert, self.distance_button, self.SECOC_LONG))
         self.accel = pcm_accel_cmd
 
     else:
@@ -355,15 +354,21 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
     #煞車許可
     brake_hold_allowed = standstill_ok and (acc_mode_ok or manual_mode_ok)
 
-
     if brake_hold_allowed:
-      self._brake_hold_counter += 1
+      if self._brake_hold_counter <= brake_hold_allowed_timer:
+        self._brake_hold_counter += 1
+
+      #煞車從放開到踩下
+      if not self._prev_brake_pressed and CS.out.brakePressed:
+        self._brake_hold_reset = True
+
+      #計時100個週期後啟動
       self.brake_hold_active = self._brake_hold_counter > brake_hold_allowed_timer and not self._brake_hold_reset
-      self._brake_hold_reset = not self._prev_brake_pressed and CS.out.brakePressed and not self._brake_hold_reset
     else:
       self._brake_hold_counter = 0
-      self.brake_hold_active = False
       self._brake_hold_reset = False
+      self.brake_hold_active = False
+
     self._prev_brake_pressed = CS.out.brakePressed
 
     if self.frame % 2 == 0:

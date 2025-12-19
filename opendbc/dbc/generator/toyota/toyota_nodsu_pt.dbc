@@ -53,8 +53,6 @@ BO_ 728 LIGHT_OPERATE: 8 BCM
 BO_ 881 LTA_RELATED: 8 FCM
  SG_ GAS_PEDAL : 15|8@0+ (0.005,0) [0|1] "" XXX
  SG_ STEER_ANGLE : 23|16@0- (0.0573,0) [-500|500] "" XXX
- SG_ TURN_R_LIGHT : 25|2@0+ (1,0) [0|3] "" XXX
- SG_ TURN_L_LIGHT : 27|2@0+ (1,0) [0|3] "" XXX
  SG_ TURN_SIGNALS : 35|2@0+ (1,0) [0|3] "" XXX
  SG_ UNKNOWN_2 : 58|1@0+ (1,0) [0|1] "" XXX
  SG_ LDA_SA_TOGGLE : 59|1@0+ (1,0) [0|1] "" XXX
@@ -161,6 +159,5 @@ VAL_ 987 ALERT_Volume 1 "Medium" 2 "High" 0 "Low";
 VAL_ 987 RADAR_ENABLED 0 "Close" 1 "Open";
 VAL_ 987 L 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
 VAL_ 987 R 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
-VAL_ 881 TURN_SIGNALS 0 "None" 1 "TurnRight" 2 "TurnLeft" 3 "None";
 VAL_ 1014 R_LIGHT 0 "OFF" 1 "ON" 2 "Flash";
 VAL_ 1014 L_LIGHT 0 "OFF" 1 "ON" 2 "Flash";
