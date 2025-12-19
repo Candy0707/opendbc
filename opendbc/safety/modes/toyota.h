@@ -388,14 +388,14 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
         tx = false;
       }
     }
-  }
 
     // SP: auto brake hold https://github.com/AlexandreSato
     if ((msg->addr == 0x344U) && (alternative_experience & ALT_EXP_ALLOW_AEB)) {
-      if (vehicle_moving || gas_pressed) {
+      if (vehicle_moving || gas_pressed || !acc_main_on) {
         tx = false;
       }
     }
+  }
 
     // UDS: Only tester present ("\x0F\x02\x3E\x00\x00\x00\x00\x00") allowed on diagnostics address
     if (msg->addr == 0x750U) {
@@ -580,7 +580,7 @@ static bool toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // SP: block AEB when auto brake hold is active, unblock AEB when auto brake hold is not active
     bool is_aeb_msg = (addr == 0x344);
-    block_msg = (is_aeb_msg && (alternative_experience & ALT_EXP_ALLOW_AEB) && !vehicle_moving && !gas_pressed && acc_main_on);
+    block_msg = (is_aeb_msg && (alternative_experience & ALT_EXP_ALLOW_AEB) && !vehicle_moving && !gas_pressed);
   }
 
   return block_msg;

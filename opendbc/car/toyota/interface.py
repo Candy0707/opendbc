@@ -52,6 +52,15 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
 
+    #如果是轉向控制 給預設值
+    if candidate in ANGLE_CONTROL_CAR:
+      ret.lateralTuning.init('pid')
+      ret.lateralTuning.pid.kpBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kpV = [0.5, 0.7]
+      ret.lateralTuning.pid.kiBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kiV = [0.08, 0.12]
+      ret.lateralTuning.pid.kf = 0.00009
+
     stop_and_go = candidate in TSS2_CAR
 
     # In TSS2 cars, the camera does long control

@@ -338,37 +338,26 @@ class CarController(CarControllerBase, SecOCLongCarController, GasInterceptorCar
 
     stopping = CC.actuators.longControlState == LongCtrlState.stopping
 
-    if CS.out.gearShifter == GearShifter.drive:
-      if CS.out.vEgo > 5.:
-        self._speed_gear_lock = True
-    else:
+    #檔位D鎖定邏輯
+    if CS.out.gearShifter != GearShifter.drive:
       self._speed_gear_lock = False
+    #速度大於5 m/s (18km/h) 啟用
+    elif CS.out.vEgo > 5.:
+      self._speed_gear_lock = True
 
-    #車輛禁止是最高條件
-    standstill_ok = CS.out.standstill and not CS.out.gasPressed
-    #ACC模式輸出停止時
-    acc_mode_ok = CS.out.cruiseState.enabled and stopping
-    #手動模式 車速 > 5 m/s 與 檔位 D 鎖定
-    manual_mode_ok = not CS.out.cruiseState.enabled and self._speed_gear_lock
-
-    #煞車許可
-    brake_hold_allowed = standstill_ok and (acc_mode_ok or manual_mode_ok)
+    brake_hold_allowed = CS.out.standstill and \
+                     not CS.out.gasPressed and \
+                     not CS.out.cruiseState.enabled and \
+                     self._speed_gear_lock
 
     if brake_hold_allowed:
-      if self._brake_hold_counter <= brake_hold_allowed_timer:
-        self._brake_hold_counter += 1
-
-      #煞車從放開到踩下
-      if not self._prev_brake_pressed and CS.out.brakePressed:
-        self._brake_hold_reset = True
-
-      #計時100個週期後啟動
+      self._brake_hold_counter += 1
       self.brake_hold_active = self._brake_hold_counter > brake_hold_allowed_timer and not self._brake_hold_reset
+      self._brake_hold_reset = not self._prev_brake_pressed and CS.out.brakePressed and not self._brake_hold_reset
     else:
       self._brake_hold_counter = 0
-      self._brake_hold_reset = False
       self.brake_hold_active = False
-
+      self._brake_hold_reset = False
     self._prev_brake_pressed = CS.out.brakePressed
 
     if self.frame % 2 == 0:
