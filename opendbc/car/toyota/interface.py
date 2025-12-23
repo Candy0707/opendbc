@@ -2,7 +2,7 @@ from opendbc.car import Bus, structs, get_safety_config, uds
 from opendbc.car.toyota.carstate import CarState
 from opendbc.car.toyota.carcontroller import CarController
 from opendbc.car.toyota.radar_interface import RadarInterface
-from opendbc.car.toyota.values import Ecu, CAR, DBC, ToyotaFlags, CarControllerParams, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, \
+from opendbc.car.toyota.values import Ecu, CAR, DBC, ToyotaFlags, CarControllerParams, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR,SECOC_CAR, \
                                                   MIN_ACC_SPEED, EPS_SCALE, UNSUPPORTED_DSU_CAR, NO_STOP_TIMER_CAR, ANGLE_CONTROL_CAR, \
                                                   ToyotaSafetyFlags
 from opendbc.car.disable_ecu import disable_ecu
@@ -36,8 +36,11 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    if candidate in ANGLE_CONTROL_CAR:
-      ret.steerControlType = SteerControlType.angle
+    #自動偵測是否支援角度控制
+    #if candidate in ANGLE_CONTROL_CAR:
+    ret.steerControlType = SteerControlType.angle if 0x191 in fingerprint[0] else SteerControlType.torque
+    if ret.steerControlType == SteerControlType.angle:
+      ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
       # LTA control can be more delayed and winds up more often
@@ -48,6 +51,15 @@ class CarInterface(CarInterfaceBase):
 
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
+
+    #如果是轉向控制 給預設值
+    if candidate in ANGLE_CONTROL_CAR:
+      ret.lateralTuning.init('pid')
+      ret.lateralTuning.pid.kpBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kpV = [0.5, 0.7]
+      ret.lateralTuning.pid.kiBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kiV = [0.08, 0.12]
+      ret.lateralTuning.pid.kf = 0.00009
 
     stop_and_go = candidate in TSS2_CAR
 
@@ -142,8 +154,9 @@ class CarInterface(CarInterfaceBase):
       ret.flags |= ToyotaFlags.RAISED_ACCEL_LIMIT.value
 
       ret.vEgoStopping = 0.25
-      ret.vEgoStarting = 0.25
-      ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
+      ret.vEgoStarting = 0.10 if candidate in CAR.TOYOTA_COROLLA_TSS2 else 0.25
+      # reach stopping target smoothly
+      ret.stoppingDecelRate = 0.03 if candidate in CAR.TOYOTA_COROLLA_TSS2 else 0.3
 
       # Hybrids have much quicker longitudinal actuator response
       if ret.flags & ToyotaFlags.HYBRID.value:
@@ -156,6 +169,9 @@ class CarInterface(CarInterfaceBase):
                      car_fw: list[structs.CarParams.CarFw], alpha_long: bool, is_release_sp: bool, docs: bool) -> structs.CarParamsSP:
     if candidate in UNSUPPORTED_DSU_CAR:
       ret.safetyParam |= ToyotaSafetyFlagsSP.UNSUPPORTED_DSU
+
+    if candidate in (TSS2_CAR - RADAR_ACC_CAR - SECOC_CAR):
+      ret.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD.value
 
     # Detect smartDSU, which intercepts ACC_CMD from the DSU (or radar) allowing openpilot to send it
     # 0x2AA is sent by a similar device which intercepts the radar instead of DSU on NO_DSU_CARs

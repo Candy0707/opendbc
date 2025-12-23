@@ -56,6 +56,8 @@ class CarState(CarStateBase, CarStateExt):
     self.gvc = 0.0
     self.secoc_synchronization = None
 
+    self.pre_collision_2 = {}
+
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
     cp_cam = can_parsers[Bus.cam]
@@ -119,19 +121,21 @@ class CarState(CarStateBase, CarStateExt):
     ret.steeringTorque = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_DRIVER"]
     ret.steeringTorqueEps = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_EPS"] * self.eps_torque_scale
     # we could use the override bit from dbc, but it's triggered at too high torque values
-    ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
-    # Check EPS LKA/LTA fault status
-    ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in TEMP_STEER_FAULTS
-    ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LKA_STATE"] in PERM_STEER_FAULTS
+    # Lane Tracing Assist control is unavailable (EPS_STATUS->LTA_STATE=0) until
+    # the more accurate angle sensor signal is initialized
+    ret.vehicleSensorsInvalid = not self.accurate_steer_angle_seen
 
-    if self.CP.steerControlType == SteerControlType.angle:
-      ret.steerFaultTemporary = ret.steerFaultTemporary or cp.vl["EPS_STATUS"]["LTA_STATE"] in TEMP_STEER_FAULTS
-      ret.steerFaultPermanent = ret.steerFaultPermanent or cp.vl["EPS_STATUS"]["LTA_STATE"] in PERM_STEER_FAULTS
-
-      # Lane Tracing Assist control is unavailable (EPS_STATUS->LTA_STATE=0) until
-      # the more accurate angle sensor signal is initialized
-      ret.vehicleSensorsInvalid = not self.accurate_steer_angle_seen
+    if self.CP.steerControlType == SteerControlType.torque:
+      ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
+      # Check EPS LKA fault status
+      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in TEMP_STEER_FAULTS
+      ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LKA_STATE"] in PERM_STEER_FAULTS
+    else:
+      ret.steeringPressed =  cp.vl["LTA_RELATED"]["STEERING_PRESSED"] != 0
+      # Check EPS LTA fault status
+      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LTA_STATE"] in TEMP_STEER_FAULTS
+      ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LTA_STATE"] in PERM_STEER_FAULTS
 
     if self.CP.carFingerprint in UNSUPPORTED_DSU_CAR:
       # TODO: find the bit likely in DSU_CRUISE that describes an ACC fault. one may also exist in CLUTCH
@@ -175,8 +179,13 @@ class CarState(CarStateBase, CarStateExt):
     ret.espDisabled = cp.vl["ESP_CONTROL"]["TC_DISABLED"] != 0
 
     if self.CP.enableBsm:
-      ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1)
-      ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1)
+      #嘗試使用 BSM 燈光作為參考
+      if self.CP.flags & ToyotaFlags.SECOC.value:
+        ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1)
+        ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1)
+      else:
+        ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1) or (cp.vl["BSM"]["L_LIGHT"] > 0)
+        ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1) or (cp.vl["BSM"]["R_LIGHT"] > 0)
 
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
@@ -207,6 +216,8 @@ class CarState(CarStateBase, CarStateExt):
       buttonEvents += create_button_events(self.distance_button, prev_distance_button, {1: ButtonType.gapAdjustCruise})
 
     ret.buttonEvents = buttonEvents
+
+    self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 
