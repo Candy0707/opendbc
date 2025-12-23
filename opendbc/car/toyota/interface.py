@@ -38,7 +38,12 @@ class CarInterface(CarInterfaceBase):
 
     #自動偵測是否支援角度控制
     #if candidate in ANGLE_CONTROL_CAR:
-    ret.steerControlType = SteerControlType.angle if 0x191 in fingerprint[0] else SteerControlType.torque
+    ret.steerControlType = SteerControlType.angle
+    if 0x191 in fingerprint[0] and candidate in (TSS2_CAR - RADAR_ACC_CAR - SECOC_CAR):
+      ret.steerControlType = SteerControlType.angle
+    else:
+      ret.steerControlType = SteerControlType.torque
+
     if ret.steerControlType == SteerControlType.angle:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
