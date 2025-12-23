@@ -38,7 +38,7 @@ class CarInterface(CarInterfaceBase):
 
     #自動偵測是否支援角度控制
     ret.steerControlType = SteerControlType.angle
-    if 0x191 in fingerprint[0] and candidate in (TSS2_CAR - RADAR_ACC_CAR - SECOC_CAR):
+    if 0x191 in fingerprint[0] and candidate in TSS2_CAR:
       ret.steerControlType = SteerControlType.angle
     else:
       ret.steerControlType = SteerControlType.torque
@@ -55,15 +55,6 @@ class CarInterface(CarInterfaceBase):
 
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
-
-    #如果是轉向控制 給預設值
-    if candidate in ANGLE_CONTROL_CAR:
-      ret.lateralTuning.init('pid')
-      ret.lateralTuning.pid.kpBP = [0.0, 20.0]
-      ret.lateralTuning.pid.kpV = [0.5, 0.7]
-      ret.lateralTuning.pid.kiBP = [0.0, 20.0]
-      ret.lateralTuning.pid.kiV = [0.08, 0.12]
-      ret.lateralTuning.pid.kf = 0.00009
 
     stop_and_go = candidate in TSS2_CAR
 
@@ -97,6 +88,15 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV = [0.6]
       ret.lateralTuning.pid.kiV = [0.1]
       ret.lateralTuning.pid.kf = 0.00007818594
+
+    elif candidate in (TSS2_CAR, ANGLE_CONTROL_CAR) or ret.steerControlType == SteerControlType.angle:
+      #如果是轉向控制 給預設值
+      ret.lateralTuning.init('pid')
+      ret.lateralTuning.pid.kpBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kpV = [0.5, 0.7]
+      ret.lateralTuning.pid.kiBP = [0.0, 20.0]
+      ret.lateralTuning.pid.kiV = [0.08, 0.12]
+      ret.lateralTuning.pid.kf = 0.00009
 
       # 2019+ RAV4 TSS2 uses two different steering racks and specific tuning seems to be necessary.
       # See https://github.com/commaai/openpilot/pull/21429#issuecomment-873652891

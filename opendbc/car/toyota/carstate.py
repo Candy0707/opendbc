@@ -56,6 +56,8 @@ class CarState(CarStateBase, CarStateExt):
     self.gvc = 0.0
     self.secoc_synchronization = None
 
+    self.steering_lka = {}
+    self.steering_lta = {}
     self.pre_collision_2 = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
@@ -123,17 +125,21 @@ class CarState(CarStateBase, CarStateExt):
     # we could use the override bit from dbc, but it's triggered at too high torque values
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
 
-    # Check EPS LKA/LTA fault status
-    ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in TEMP_STEER_FAULTS
-    ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LKA_STATE"] in PERM_STEER_FAULTS
+    # Lane Tracing Assist control is unavailable (EPS_STATUS->LTA_STATE=0) until
+    # the more accurate angle sensor signal is initialized
+    ret.vehicleSensorsInvalid = not self.accurate_steer_angle_seen
+    if self.CP.steerControlType == SteerControlType.torque:
+      self.steering_lka = cp_cam.vl["STEERING_LKA"]
+      # Check EPS LKA fault status
+      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LKA_STATE"] in TEMP_STEER_FAULTS
+      ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LKA_STATE"] in PERM_STEER_FAULTS
+    else:
+      self.steering_lta = cp_cam.vl["STEERING_LTA"]
+      # Check EPS LYA fault status
+      ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LTA_STATE"] in TEMP_STEER_FAULTS
+      ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LTA_STATE"] in PERM_STEER_FAULTS
 
-    if self.CP.steerControlType == SteerControlType.angle:
-      ret.steerFaultTemporary = ret.steerFaultTemporary or cp.vl["EPS_STATUS"]["LTA_STATE"] in TEMP_STEER_FAULTS
-      ret.steerFaultPermanent = ret.steerFaultPermanent or cp.vl["EPS_STATUS"]["LTA_STATE"] in PERM_STEER_FAULTS
 
-      # Lane Tracing Assist control is unavailable (EPS_STATUS->LTA_STATE=0) until
-      # the more accurate angle sensor signal is initialized
-      ret.vehicleSensorsInvalid = not self.accurate_steer_angle_seen
 
     if self.CP.carFingerprint in UNSUPPORTED_DSU_CAR:
       # TODO: find the bit likely in DSU_CRUISE that describes an ACC fault. one may also exist in CLUTCH
