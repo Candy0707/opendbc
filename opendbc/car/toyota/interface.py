@@ -4,7 +4,7 @@ from opendbc.car.toyota.carcontroller import CarController
 from opendbc.car.toyota.radar_interface import RadarInterface
 from opendbc.car.toyota.values import Ecu, CAR, DBC, ToyotaFlags, CarControllerParams, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, \
                                                   MIN_ACC_SPEED, EPS_SCALE, NO_STOP_TIMER_CAR, ANGLE_CONTROL_CAR, \
-                                                  ToyotaSafetyFlags, UNSUPPORTED_DSU_CAR
+                                                  ToyotaSafetyFlags, UNSUPPORTED_DSU_CAR, SECOC_CAR
 from opendbc.car.disable_ecu import disable_ecu
 from opendbc.car.interfaces import CarInterfaceBase
 from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP, ToyotaSafetyFlagsSP
@@ -37,7 +37,6 @@ class CarInterface(CarInterfaceBase):
       ret.dashcamOnly = is_release
 
     #自動偵測是否支援角度控制
-    #if candidate in ANGLE_CONTROL_CAR:
     ret.steerControlType = SteerControlType.angle
     if 0x191 in fingerprint[0] and candidate in (TSS2_CAR - RADAR_ACC_CAR - SECOC_CAR):
       ret.steerControlType = SteerControlType.angle
