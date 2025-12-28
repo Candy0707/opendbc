@@ -36,7 +36,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    if candidate in ANGLE_CONTROL_CAR or ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL.value:
+    if candidate in ANGLE_CONTROL_CAR or ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL:
       ret.steerControlType = SteerControlType.angle
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
