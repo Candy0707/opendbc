@@ -349,7 +349,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
     gear = CS.out.gearShifter == GearShifter.drive
-    speedlock = self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED.value
+    speedlock = self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED
     if speedlock:
       #檔位D鎖定邏輯
       if not gear:

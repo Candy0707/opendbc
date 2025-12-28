@@ -36,17 +36,21 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    if candidate in ANGLE_CONTROL_CAR or ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL:
-      ret.steerControlType = SteerControlType.angle
+    #開啟角度控制，檢查是否為TSS2車輛並且CAN線上有 LTA 控制(0x191)
+    SP_ANGLE_CONTROL = bool(ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL) and candidate in TSS2_CAR and 0x191 in fingerprint[0]
+    if candidate in ANGLE_CONTROL_CAR or SP_ANGLE_CONTROL:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
       # LTA control can be more delayed and winds up more often
+      ret.steerControlType = SteerControlType.angle
       ret.steerActuatorDelay = 0.18
       ret.steerLimitTimer = 0.8
     else:
+      ret.flags &= ~ToyotaFlags.ANGLE_CONTROL.value
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
+      ret.steerControlType = SteerControlType.torque
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
 
