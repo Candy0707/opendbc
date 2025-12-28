@@ -358,7 +358,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       elif CS.out.vEgo > 5.:
         self._speed_gear_lock = True
 
-    standstill_ok = CS.out.standstill and not CS.out.gasPressed
+    standstill_ok = gear and CS.out.standstill and not CS.out.gasPressed
 
     cruise_enabled = CS.out.cruiseState.enabled and CC.actuators.longControlState == LongCtrlState.stopping
 
