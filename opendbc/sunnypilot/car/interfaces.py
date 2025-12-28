@@ -145,6 +145,6 @@ def _initialize_toyota(CP: structs.CarParams, CP_SP: structs.CarParamsSP, params
     if toyota_auto_hold > 0:
       CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD.value
 
-    if toyota_auto_hold > 2:
+    if toyota_auto_hold == 2:
       CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED.value
 
