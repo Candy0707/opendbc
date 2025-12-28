@@ -13,7 +13,9 @@ class ToyotaFlagsSP(IntFlag):
   RADAR_CAN_FILTER = 2
   ZSS = 4
   STOCK_LONGITUDINAL = 8
+  USING_ANGLE_CONTROL =16
   SP_AUTO_BRAKE_HOLD = 32
+  SP_AUTO_BRAKE_HOLD_SPEED = 64
 
 
 class ToyotaSafetyFlagsSP:

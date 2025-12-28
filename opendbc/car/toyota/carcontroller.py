@@ -348,22 +348,21 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 # auto brake hold (https://github.com/AlexandreSato/)
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
-
-    cruiseState = CS.out.cruiseState.enabled
-    stopping = CC.actuators.longControlState == LongCtrlState.stopping
-
-    #檔位D鎖定邏輯
-    if CS.out.gearShifter != GearShifter.drive:
-      self._speed_gear_lock = False
-    #速度大於5 m/s (18km/h) 啟用
-    elif CS.out.vEgo > 5.:
-      self._speed_gear_lock = True
+    gear = CS.out.gearShifter == GearShifter.drive
+    speedlock = self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED.value
+    if speedlock:
+      #檔位D鎖定邏輯
+      if not gear:
+        self._speed_gear_lock = False
+      #速度大於5 m/s (18km/h) 啟用
+      elif CS.out.vEgo > 5.:
+        self._speed_gear_lock = True
 
     standstill_ok = CS.out.standstill and not CS.out.gasPressed
 
-    cruise_enabled = cruiseState and stopping
+    cruise_enabled = CS.out.cruiseState.enabled and CC.actuators.longControlState == LongCtrlState.stopping
 
-    cruise_disabled = not cruiseState and self._speed_gear_lock
+    cruise_disabled = not CS.out.cruiseState.enabled and True if not speedlock else self._speed_gear_lock
 
     brake_hold_allowed =  standstill_ok and (cruise_enabled or cruise_disabled)
 

@@ -36,14 +36,8 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    #自動偵測是否支援角度控制
-    ret.steerControlType = SteerControlType.angle
-    if 0x191 in fingerprint[0] and candidate in TSS2_CAR:
+    if candidate in ANGLE_CONTROL_CAR or ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL.value:
       ret.steerControlType = SteerControlType.angle
-    else:
-      ret.steerControlType = SteerControlType.torque
-
-    if ret.steerControlType == SteerControlType.angle:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
@@ -166,9 +160,6 @@ class CarInterface(CarInterfaceBase):
                      car_fw: list[structs.CarParams.CarFw], alpha_long: bool, is_release_sp: bool, docs: bool) -> structs.CarParamsSP:
     if candidate in UNSUPPORTED_DSU_CAR:
       ret.safetyParam |= ToyotaSafetyFlagsSP.UNSUPPORTED_DSU
-
-    if candidate in (TSS2_CAR - RADAR_ACC_CAR - SECOC_CAR):
-      ret.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD.value
 
     # Detect smartDSU, which intercepts ACC_CMD from the DSU (or radar) allowing openpilot to send it
     # 0x2AA is sent by a similar device which intercepts the radar instead of DSU on NO_DSU_CARs

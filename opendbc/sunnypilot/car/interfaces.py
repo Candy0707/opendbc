@@ -133,6 +133,18 @@ def _initialize_stop_and_go(CP: structs.CarParams, CP_SP: structs.CarParamsSP, p
 def _initialize_toyota(CP: structs.CarParams, CP_SP: structs.CarParamsSP, params_dict: dict[str, str]) -> None:
   if CP.brand == 'toyota':
     toyota_stock_long = int(params_dict.get("ToyotaEnforceStockLongitudinal", 0)) == 1
+    toyota_angle_control = int(params_dict.get("ToyotaEnableAngleControl", 0)) == 1
+    toyota_auto_hold = int(params_dict.get("ToyotaEnableAutoHold", 0))
 
     if toyota_stock_long:
       CP_SP.flags |= ToyotaFlagsSP.STOCK_LONGITUDINAL.value
+
+    if toyota_angle_control:
+      CP_SP.flags |= ToyotaFlagsSP.USING_ANGLE_CONTROL.value
+
+    if toyota_auto_hold > 0:
+      CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD.value
+
+    if toyota_auto_hold > 2:
+      CP_SP.flags |= ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED.value
+
