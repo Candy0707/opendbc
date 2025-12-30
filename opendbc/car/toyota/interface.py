@@ -36,10 +36,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    #開啟角度控制，檢查是否為TSS2車輛並且CAN線上有 LTA 控制(0x191)
-    #從這邊無法有效控制，後續再改
-    SP_ANGLE_CONTROL = ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL and candidate in TSS2_CAR and 0x191 in fingerprint[0]
-    if candidate in ANGLE_CONTROL_CAR or SP_ANGLE_CONTROL:
+    if candidate in ANGLE_CONTROL_CAR:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
@@ -179,6 +176,10 @@ class CarInterface(CarInterfaceBase):
     # https://github.com/zorrobyte/betterToyotaAngleSensorForOP
     if 0x23 in fingerprint[0] and not stock_cp.flags & ToyotaFlags.SECOC:
       ret.flags |= ToyotaFlagsSP.ZSS.value
+
+    #開啟角度控制，CAN線上有 LTA 控制(0x191)
+    if 0x191 in fingerprint[0] and ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL:
+      stock_cp.flags |= ToyotaFlags.ANGLE_CONTROL.value
 
     if candidate == CAR.TOYOTA_PRIUS:
       if ret.flags & ToyotaFlagsSP.ZSS:
