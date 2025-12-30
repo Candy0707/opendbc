@@ -52,7 +52,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
 
-    if candidate in ANGLE_CONTROL_CAR:
+    if ret.steerControlType == SteerControlType.angle:
       ret.lateralTuning.init('pid')
       ret.lateralTuning.pid.kpBP = [0.0, 20.0]
       ret.lateralTuning.pid.kpV = [0.5, 0.7]
