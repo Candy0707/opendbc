@@ -52,15 +52,6 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
       ret.steerLimitTimer = 0.4
 
-    if candidate in ANGLE_CONTROL_CAR:
-      #如果是轉向控制 給預設值
-      ret.lateralTuning.init('pid')
-      ret.lateralTuning.pid.kpBP = [0.0, 20.0]
-      ret.lateralTuning.pid.kpV = [0.5, 0.7]
-      ret.lateralTuning.pid.kiBP = [0.0, 20.0]
-      ret.lateralTuning.pid.kiV = [0.08, 0.12]
-      ret.lateralTuning.pid.kf = 0.00009
-
     stop_and_go = candidate in TSS2_CAR
 
     # In TSS2 cars, the camera does long control
@@ -180,6 +171,15 @@ class CarInterface(CarInterfaceBase):
     #開啟角度控制，CAN線上有 LTA 控制(0x191)
     if 0x191 in fingerprint[0] and ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL:
       stock_cp.flags |= ToyotaFlags.ANGLE_CONTROL.value
+      stock_cp.steerControlType = SteerControlType.angle
+      stock_cp.steerActuatorDelay = 0.18
+      stock_cp.steerLimitTimer = 0.8
+      stock_cp.lateralTuning.init('pid')
+      stock_cp.lateralTuning.pid.kpBP = [0.0, 20.0]
+      stock_cp.lateralTuning.pid.kpV = [0.5, 0.7]
+      stock_cp.lateralTuning.pid.kiBP = [0.0, 20.0]
+      stock_cp.lateralTuning.pid.kiV = [0.08, 0.12]
+      stock_cp.lateralTuning.pid.kf = 0.00009
 
     if candidate == CAR.TOYOTA_PRIUS:
       if ret.flags & ToyotaFlagsSP.ZSS:
