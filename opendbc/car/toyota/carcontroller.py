@@ -12,8 +12,8 @@ from opendbc.car.toyota.values import CAR, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         CarControllerParams, ToyotaFlags, \
                                         UNSUPPORTED_DSU_CAR
 from opendbc.can import CANPacker
-from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 
+from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
 
 Ecu = structs.CarParams.Ecu
@@ -41,12 +41,8 @@ MAX_USER_TORQUE = 500
 
 def get_long_tune(CP, params):
   if CP.carFingerprint in TSS2_CAR:
-    if CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2:
-      kiBP = [2.0,  6.0,  12.,  27.]
-      kiV = [0.47, 0.27,  0.215, 0.1]
-    else:
-      kiBP = [2., 5.]
-      kiV = [0.5, 0.25]
+    kiBP = [2., 5.]
+    kiV = [0.5, 0.25]
   else:
     kiBP = [0., 5., 35.]
     kiV = [3.6, 2.4, 1.5]
@@ -209,7 +205,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.last_standstill = CS.out.standstill
 
     if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC))
+      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC, self.standstill_req))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -346,7 +342,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     return new_actuators, can_sends
 
 # auto brake hold (https://github.com/AlexandreSato/)
-  def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
+  def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, standstill_req: bool, brake_hold_allowed_timer: int = 100):
     can_sends = []
     gear = CS.out.gearShifter == GearShifter.drive
     speedlock = self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED
@@ -360,7 +356,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     standstill_ok = gear and CS.out.standstill and not CS.out.gasPressed
 
-    cruise_enabled = CS.out.cruiseState.enabled and CC.actuators.longControlState == LongCtrlState.stopping
+    cruise_enabled = CS.out.cruiseState.enabled and standstill_req
 
     cruise_disabled = not CS.out.cruiseState.enabled and True if not speedlock else self._speed_gear_lock
 

@@ -135,8 +135,6 @@ class CarState(CarStateBase, CarStateExt):
       ret.steerFaultTemporary = cp.vl["EPS_STATUS"]["LTA_STATE"] in TEMP_STEER_FAULTS
       ret.steerFaultPermanent = cp.vl["EPS_STATUS"]["LTA_STATE"] in PERM_STEER_FAULTS
 
-
-
     if self.CP.carFingerprint in UNSUPPORTED_DSU_CAR:
       # TODO: find the bit likely in DSU_CRUISE that describes an ACC fault. one may also exist in CLUTCH
       ret.cruiseState.available = cp.vl["DSU_CRUISE"]["MAIN_ON"] != 0
