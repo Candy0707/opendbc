@@ -37,8 +37,9 @@ class CarInterface(CarInterfaceBase):
       ret.dashcamOnly = is_release
 
     #開啟角度控制，檢查是否為TSS2車輛並且CAN線上有 LTA 控制(0x191)
-    SP_ANGLE_CONTROL = bool(ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL) and candidate in TSS2_CAR and 0x191 in fingerprint[0]
-    if candidate in ANGLE_CONTROL_CAR or SP_ANGLE_CONTROL:
+    #從這邊無法有效控制，後續再改
+    #SP_ANGLE_CONTROL = bool(ret.flags & ToyotaFlagsSP.USING_ANGLE_CONTROL) and candidate in TSS2_CAR and 0x191 in fingerprint[0]
+    if candidate in ANGLE_CONTROL_CAR:# or SP_ANGLE_CONTROL:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
 
