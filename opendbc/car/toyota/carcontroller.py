@@ -205,7 +205,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.last_standstill = CS.out.standstill
 
     if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC, self.standstill_req))
+      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -342,10 +342,12 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     return new_actuators, can_sends
 
 # auto brake hold (https://github.com/AlexandreSato/)
-  def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, standstill_req: bool, brake_hold_allowed_timer: int = 100):
+  def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
     gear = CS.out.gearShifter == GearShifter.drive
     speedlock = self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD_SPEED
+    acc_stopping = CC.actuators.longControlState == LongCtrlState.stopping
+    acc_accel = not CC.actuators.accel > 0
     if speedlock:
       #檔位D鎖定邏輯
       if not gear:
@@ -356,7 +358,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     standstill_ok = gear and CS.out.standstill and not CS.out.gasPressed
 
-    cruise_enabled = CS.out.cruiseState.enabled and standstill_req
+    cruise_enabled = CS.out.cruiseState.enabled and acc_stopping and acc_accel
 
     cruise_disabled = not CS.out.cruiseState.enabled and True if not speedlock else self._speed_gear_lock
 

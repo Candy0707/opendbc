@@ -37,7 +37,9 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.SECOC.value
       ret.dashcamOnly = is_release
 
-    if candidate in ANGLE_CONTROL_CAR or Params().get_bool("ToyotaEnableAngleControl"):
+    AngleControl = 0x191 in fingerprint[0] and candidate in TSS2_CAR and Params().get_bool("ToyotaEnableAngleControl")
+
+    if candidate in ANGLE_CONTROL_CAR or AngleControl:
       ret.flags |= ToyotaFlags.ANGLE_CONTROL.value
       ret.steerControlType = SteerControlType.angle
       ret.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.LTA.value
