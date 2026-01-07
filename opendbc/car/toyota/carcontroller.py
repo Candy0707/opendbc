@@ -360,7 +360,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     cruise_enabled = CS.out.cruiseState.enabled and acc_stopping and acc_accel
 
-    cruise_disabled = not CS.out.cruiseState.enabled and True if not speedlock else self._speed_gear_lock
+    cruise_disabled = not CS.out.cruiseState.enabled and (True if not speedlock else self._speed_gear_lock)
 
     brake_hold_allowed =  standstill_ok and (cruise_enabled or cruise_disabled)
 
