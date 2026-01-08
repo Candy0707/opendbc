@@ -228,6 +228,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
         # internal PCM gas command can get stuck unwinding from negative accel so we apply a generous rate limit
         pcm_accel_cmd = actuators.accel
+
         if CC.longActive:
           pcm_accel_cmd = rate_limit(pcm_accel_cmd, self.prev_accel, ACCEL_WINDDOWN_LIMIT, ACCEL_WINDUP_LIMIT)
         self.prev_accel = pcm_accel_cmd
@@ -279,6 +280,12 @@ class CarController(CarControllerBase, GasInterceptorCarController):
           self.permit_braking = True
         elif net_acceleration_request_min > 0.3:
           self.permit_braking = False
+
+        #AutoHoltStop_ACC
+        if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+          if self.brake_hold_active and CS.out.standstill and stopping:
+            pcm_accel_cmd = 0.0
+            self.permit_braking = False
 
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
