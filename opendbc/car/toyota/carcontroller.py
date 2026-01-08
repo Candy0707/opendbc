@@ -21,6 +21,10 @@ LongCtrlState = structs.CarControl.Actuators.LongControlState
 SteerControlType = structs.CarParams.SteerControlType
 VisualAlert = structs.CarControl.HUDControl.VisualAlert
 GearShifter = structs.CarState.GearShifter
+#BRAKE_HOLD
+BRAKE_HOLD_IDLE = 0
+BRAKE_HOLD_COUNTING = 1
+BRAKE_HOLD_ACTIVE = 2
 
 # The up limit allows the brakes/gas to unwind quickly leaving a stop,
 # the down limit roughly matches the rate of ACCEL_NET, reducing PCM compensation windup
@@ -84,9 +88,9 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.secoc_prev_reset_counter = 0
 
     if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      self._brake_hold_state = BRAKE_HOLD_IDLE
       self.brake_hold_active: bool = False
       self._brake_hold_counter: int = 0
-      self._brake_hold_reset: bool = False
       self._prev_brake_pressed: bool = False
       self._speed_gear_lock = False
 
@@ -358,22 +362,46 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     standstill_ok = gear and CS.out.standstill and not CS.out.gasPressed
 
+    speed_enabled = True if not speedlock else self._speed_gear_lock
+
     cruise_enabled = CS.out.cruiseState.enabled and acc_stopping and acc_accel
 
-    cruise_disabled = not CS.out.cruiseState.enabled and (True if not speedlock else self._speed_gear_lock)
+    cruise_disabled = not CS.out.cruiseState.enabled and speed_enabled
 
     brake_hold_allowed =  standstill_ok and (cruise_enabled or cruise_disabled)
 
+    brake_pressed = CS.out.brakePressed
+    brake_pressed_edge = brake_pressed and not self._prev_brake_pressed
 
     if brake_hold_allowed:
-      self._brake_hold_counter += 1
-      self.brake_hold_active = self._brake_hold_counter > brake_hold_allowed_timer and not self._brake_hold_reset
-      self._brake_hold_reset = not self._prev_brake_pressed and CS.out.brakePressed and not self._brake_hold_reset
+      if self._brake_hold_state == BRAKE_HOLD_IDLE:
+        # 踩下煞車 -> 開始計時
+        if brake_pressed_edge:
+          self._brake_hold_state = BRAKE_HOLD_COUNTING
+          self._brake_hold_counter = 0
+      elif self._brake_hold_state == BRAKE_HOLD_COUNTING:
+        if not brake_pressed:
+          # 放開煞車 -> 回 IDLE
+          self._brake_hold_state = BRAKE_HOLD_IDLE
+          self._brake_hold_counter = 0
+        else:
+         # 煞車持續踩住 -> 計時
+          self._brake_hold_counter += 1
+          if self._brake_hold_counter > brake_hold_allowed_timer:
+            self._brake_hold_state = BRAKE_HOLD_ACTIVE
+      elif self._brake_hold_state == BRAKE_HOLD_ACTIVE:
+        # 再次踩下煞車 -> 解除並重新計時
+        if brake_pressed_edge:
+          self._brake_hold_state = BRAKE_HOLD_COUNTING
+          self._brake_hold_counter = 0
     else:
+      # brake_hold_allowed 不成立 -> 無條件清除
+      self._brake_hold_state = BRAKE_HOLD_IDLE
       self._brake_hold_counter = 0
-      self.brake_hold_active = False
-      self._brake_hold_reset = False
-    self._prev_brake_pressed = CS.out.brakePressed
+
+    self.brake_hold_active = self._brake_hold_state == BRAKE_HOLD_ACTIVE
+    self._prev_brake_pressed = brake_pressed
+
 
     if self.frame % 2 == 0:
       can_sends.append(toyotacan.create_brake_hold_command(self.packer, self.frame, CS.pre_collision_2, self.brake_hold_active))
