@@ -380,7 +380,7 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
 
     // SP: auto brake hold https://github.com/AlexandreSato
     if ((msg->addr == 0x344U) && (alternative_experience & ALT_EXP_ALLOW_AEB)) {
-      if (vehicle_moving || gas_pressed || !acc_main_on) {
+      if (vehicle_moving || gas_pressed) {
         tx = false;
       }
     }
