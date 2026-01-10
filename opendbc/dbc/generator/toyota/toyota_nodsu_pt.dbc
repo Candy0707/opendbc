@@ -68,10 +68,6 @@ BO_ 896 AIR_CONDITIONER_ECU: 8 HVAC
  SG_ FAN_MAX : 23|1@0+ (1,0) [0|1] "" XXX
  SG_ NEW_SIGNAL_1 : 55|8@0- (1,1) [0|255] "" XXX
 
-BO_ 918 NEW_MSG_396: 7 CS
- SG_ NEW_SIGNAL_2 : 1|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_1 : 22|3@0+ (1,0) [0|7] "" XXX
-
 BO_ 945 AIR_CONDITIONER_4: 8 HVAC
 
 BO_ 953 ENGINE_TEMP: 8 ECM
@@ -94,11 +90,11 @@ BO_ 971 NEW_MSG_3CB: 7 XXX
  SG_ UNKNOWN_2 : 47|8@0+ (1,0) [0|255] "" XXX
  SG_ CHECKSUM : 55|8@0+ (1,0) [0|255] "" XXX
 
-BO_ 987 Parking_Radar: 8 CS
- SG_ L_Distance : 28|3@0+ (1,0) [0|7] "" XXX
- SG_ R_Distance : 31|3@0+ (1,0) [0|7] "" XXX
- SG_ L : 33|2@0+ (1,0) [0|1] "" XXX
- SG_ R : 35|2@0+ (1,0) [0|1] "" XXX
+BO_ 987 PARKING_RADAR: 8 CS
+ SG_ R_Distance : 28|3@0+ (1,0) [0|7] "" XXX
+ SG_ L_Distance : 31|3@0+ (1,0) [0|7] "" XXX
+ SG_ R : 33|2@0+ (1,0) [0|1] "" XXX
+ SG_ L : 35|2@0+ (1,0) [0|1] "" XXX
  SG_ NEW_SIGNAL_1 : 41|1@0+ (1,0) [0|1] "" XXX
  SG_ NEW_SIGNAL_2 : 45|1@0+ (1,0) [0|1] "" XXX
  SG_ NEW_SIGNAL_3 : 47|1@0+ (1,0) [0|1] "" XXX
@@ -154,8 +150,8 @@ VAL_ 728 TURN_PRESS 0 "None" 1 "Right" 2 "Left";
 VAL_ 881 TURN_SIGNALS 0 "None" 1 "TurnRight" 2 "TurnLeft" 3 "None";
 VAL_ 896 POWER 0 "OFF" 1 "ON";
 VAL_ 896 Compressor 0 "OFF" 1 "ON";
-VAL_ 987 L 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
 VAL_ 987 R 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
+VAL_ 987 L 0 "None" 1 "Approaching" 2 "VeryClose" 3 "Collision";
 VAL_ 987 ALERT_Volume 1 "Medium" 2 "High" 0 "Low";
 VAL_ 987 RADAR_ENABLED 0 "Close" 1 "Open";
 VAL_ 1014 R_LIGHT 0 "OFF" 1 "ON" 2 "Flash";

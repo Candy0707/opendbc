@@ -282,10 +282,11 @@ class CarController(CarControllerBase, GasInterceptorCarController):
           self.permit_braking = False
 
         #AutoHoltStop_ACC(HyBrid)
+        #改由 AutoHold 接手煞車
         if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD and self.CP.flags & ToyotaFlags.HYBRID.value:
           if self.brake_hold_active and CS.out.standstill and stopping:
             pcm_accel_cmd = 0.0
-            #self.permit_braking = False
+            self.permit_braking = False
 
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))

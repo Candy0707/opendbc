@@ -108,8 +108,8 @@ BO_ 466 PCM_CRUISE: 8 XXX
  SG_ ACC_BRAKING : 12|1@0+ (1,0) [0|1] "" XXX
  SG_ ACCEL_NET : 23|16@0- (0.0009765625,0) [-20|20] "m/s^2" XXX
  SG_ NEUTRAL_FORCE : 39|16@0- (2,0) [-65536|65534] "N" XXX
- SG_ CRUISE_STATE : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CANCEL_REQ : 49|1@1+ (1,0) [0|1] "" XXX
+ SG_ CRUISE_STATE : 55|4@0+ (1,0) [0|15] "" XXX
  SG_ CHECKSUM : 63|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 467 PCM_CRUISE_2: 8 XXX
@@ -136,6 +136,14 @@ BO_ 560 BRAKE_2: 7 XXX
  SG_ PARKING_BRAKE : 49|2@0+ (1,0) [0|3] "" XXX
  SG_ BRAKE : 50|1@0+ (1,0) [0|1] "" XXX
  SG_ NEW_SIGNAL_2 : 54|3@0+ (1,0) [0|7] "" XXX
+
+BO_ 562 WHEEL_POSITION: 6 XXX
+ SG_ NEW_SIGNAL_1 : 7|8@0+ (1,0) [0|255] "" XXX
+ SG_ NEW_SIGNAL_2 : 15|8@0+ (1,0) [0|255] "" XXX
+ SG_ COUNTER : 21|3@0+ (1,0) [0|7] "" XXX
+ SG_ NEW_SIGNAL_3 : 31|8@0+ (1,0) [0|255] "" XXX
+ SG_ NEW_SIGNAL_4 : 39|8@0+ (1,0) [0|255] "" XXX
+ SG_ CHECKSUM : 47|8@0+ (1,0) [0|255] "" XXX
 
 BO_ 581 GAS_PEDAL_HYBRID: 8 XXX
  SG_ GAS_PEDAL : 23|8@0+ (0.5,0) [0|1] "%" XXX
@@ -235,12 +243,21 @@ BO_ 869 DSU_CRUISE: 7 DSU
  SG_ LEAD_REL_ACCEL : 47|8@0- (1,0) [0|255] "m/s" XXX
 
 BO_ 898 AIR_CONDITIONER: 8 XXX
- SG_ SET_TEMP_1 : 5|6@0+ (0.5,15.5) [0|63] "" TEMP
- SG_ SET_TEMP_2 : 13|6@0+ (0.5,15.5) [0|63] "" TEMP
+ SG_ SET_TEMP_LEFT : 5|6@0+ (0.5,15.5) [0|63] "" TEMP
+ SG_ SET_TEMP_RIGHT : 13|6@0+ (0.5,15.5) [0|63] "" TEMP
  SG_ NEW_SIGNAL_1 : 31|8@0- (0.1,15.5) [0|255] "" XXX
  SG_ NEW_SIGNAL_2 : 39|8@0- (0.1,15.5) [0|255] "" XXX
  SG_ Offset : 53|6@0+ (0.5,0) [0|63] "" XXX
  SG_ ECO_MODE : 54|1@0+ (1,0) [0|1] "" XXX
+
+BO_ 918 PARKING_SENSOR: 7 CS
+ SG_ SENSOR_ACTIVE : 1|1@0+ (1,0) [0|1] "" XXX
+ SG_ SENSOR_FR : 10|3@0+ (1,0) [0|7] "" XXX
+ SG_ SENSOR_FL : 14|3@0+ (1,0) [0|7] "" XXX
+ SG_ SENSOR_FM : 18|3@0+ (1,0) [0|7] "" XXX
+ SG_ SENSOR_RM : 22|3@0+ (1,0) [0|7] "" XXX
+ SG_ SENSOR_RR : 26|3@0+ (1,0) [0|7] "" XXX
+ SG_ SENSOR_RL : 30|3@0+ (1,0) [0|7] "" XXX
 
 BO_ 921 PCM_CRUISE_SM: 8 XXX
  SG_ MAIN_ON : 4|1@0+ (1,0) [0|1] "" XXX
@@ -251,7 +268,8 @@ BO_ 921 PCM_CRUISE_SM: 8 XXX
 
 BO_ 944 AIR_CONDITIONER_2: 8 XXX
  SG_ REAR_DEFOG : 7|1@0+ (1,0) [0|1] "" XXX
- SG_ TENP_CAR_IN : 15|8@0+ (0.25,-6.5) [0|255] "" XXX
+ SG_ NEW_SIGNAL_1 : 15|8@0+ (1,-48) [0|255] "" XXX
+ SG_ OUTSIDE_TEMP : 39|8@0+ (1,-48) [0|255] "" XXX
  SG_ AC : 43|1@0+ (1,0) [0|1] "" XXX
  SG_ WINDSCREEN_DEFOG : 44|1@0+ (1,0) [0|1] "" XXX
 
@@ -275,6 +293,7 @@ BO_ 951 ESP_CONTROL: 8 ESP
 
 BO_ 956 GEAR_PACKET: 8 XXX
  SG_ SPORT_ON : 2|1@0+ (1,0) [0|1] "" XXX
+ SG_ LOCKED : 7|1@0+ (1,0) [0|1] "" XXX
  SG_ GEAR : 13|6@0+ (1,0) [0|63] "" XXX
  SG_ SPORT_GEAR_ON : 33|1@0+ (1,0) [0|1] "" XXX
  SG_ SPORT_GEAR : 38|3@0+ (1,0) [0|7] "" XXX
@@ -443,12 +462,10 @@ BO_ 1410 VIN_PART_3: 8 CGW
  SG_ VIN_17 : 7|8@0+ (1,0) [0|0] "" XXX
 
 BO_ 1552 BODY_CONTROL_STATE_2: 8 XXX
- SG_ UI_SPEED : 23|8@0+ (1,0) [0|255] "" XXX
+ SG_ UI_SPEED : 23|8@0+ (1,0) [0|255] "km/h" XXX
  SG_ METER_SLIDER_BRIGHTNESS_PCT : 30|7@0+ (1,0) [12|100] "%" XXX
  SG_ METER_SLIDER_LOW_BRIGHTNESS : 37|1@0+ (1,0) [0|1] "" XXX
  SG_ METER_SLIDER_DIMMED : 38|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_2 : 47|8@0- (1,0) [0|255] "" XXX
- SG_ NEW_SIGNAL_1 : 55|8@0- (1,0) [0|1] "" XXX
  SG_ UNITS : 63|3@0+ (1,0) [1|4] "" XXX
 
 BO_ 1553 UI_SETTING: 8 XXX
@@ -471,7 +488,7 @@ BO_ 1568 BODY_CONTROL_STATE: 8 XXX
  SG_ DOOR_OPEN_RR : 43|1@0+ (1,0) [0|1] "" XXX
  SG_ DOOR_OPEN_FR : 44|1@0+ (1,0) [0|1] "" XXX
  SG_ DOOR_OPEN_FL : 45|1@0+ (1,0) [0|1] "" XXX
- SG_ PARKING : 51|2@0+ (1,0) [0|3] "" XXX
+ SG_ PARKING_LIGHT : 51|2@0+ (1,0) [0|3] "" XXX
  SG_ PARKING_BRAKE : 60|1@0+ (1,0) [0|1] "" XXX
  SG_ SEATBELT_DRIVER_UNLATCHED : 62|1@0+ (1,0) [0|1] "" XXX
 
@@ -488,7 +505,11 @@ BO_ 1570 LIGHT_STALK: 8 SCM
  SG_ AUTO_HIGH_BEAM : 37|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1571 CERTIFICATION_ECU: 8 CGW
- SG_ DOOR_LOCK_FEEDBACK_LIGHT : 15|1@0+ (1,0) [0|0] "" XXX
+ SG_ CHANGED : 15|1@0+ (1,0) [0|0] "" XXX
+ SG_ SIDE_MIRROR_R_LIGHT : 20|1@0+ (1,0) [0|1] "" XXX
+ SG_ SIDE_MIRROR_L_LIGHT : 21|1@0+ (1,0) [0|1] "" XXX
+ SG_ SIDE_MIRROR_CLOSE : 22|1@0+ (1,0) [0|1] "" XXX
+ SG_ SIDE_MIRROR_AUTO : 23|1@0+ (1,0) [0|1] "" XXX
  SG_ LIGHT : 33|1@0+ (1,0) [0|1] "" XXX
  SG_ KEYFOB_LOCKING_FEEDBACK_LIGHT : 61|1@0+ (1,0) [0|0] "" XXX
  SG_ KEYFOB_UNLOCKING_FEEDBACK_LIGHT : 62|1@0+ (1,0) [0|0] "" XXX
@@ -621,9 +642,13 @@ VAL_ 835 ACC_MALFUNCTION 1 "faulted" 0 "ok";
 VAL_ 835 ACC_TYPE 2 "permanent low speed lockout" 1 "ok";
 VAL_ 835 ACC_CUT_IN 1 "CUT-IN Detected" 0 "clear";
 VAL_ 865 CLUTCH_RELEASED 0 "clutch pressed any amount" 1 "clutch released";
-VAL_ 898 SET_TEMP_1 0 "LO" 55 "HI" 57 "OFF";
-VAL_ 898 SET_TEMP_2 0 "LO" 55 "HI" 57 "OFF";
+VAL_ 898 SET_TEMP_LEFT 0 "LO" 55 "HI" 57 "OFF";
+VAL_ 898 SET_TEMP_RIGHT 0 "LO" 55 "HI" 57 "OFF";
 VAL_ 898 ECO_MODE 0 "OFF" 1 "ON";
+VAL_ 918 SENSOR_FR 0 "OFF" 1 "CLOSE" 7 "FAR";
+VAL_ 918 SENSOR_FL 0 "OFF" 1 "CLOSE" 7 "FAR";
+VAL_ 918 SENSOR_RR 0 "OFF" 1 "CLOSE" 7 "FAR";
+VAL_ 918 SENSOR_RL 0 "OFF" 1 "CLOSE" 7 "FAR";
 VAL_ 921 CRUISE_CONTROL_STATE 2 "disabled" 11 "hold" 10 "hold_waiting_user_cmd" 6 "enabled" 5 "faulted";
 VAL_ 921 DISTANCE_LINES 0 "not displayed" 1 "close" 2 "medium" 3 "far";
 VAL_ 944 REAR_DEFOG 0 "OFF" 1 "ON";
@@ -674,7 +699,7 @@ VAL_ 1568 DOOR_OPEN_RL 0 "close" 1 "open";
 VAL_ 1568 DOOR_OPEN_RR 0 "close" 1 "open";
 VAL_ 1568 DOOR_OPEN_FR 0 "close" 1 "open";
 VAL_ 1568 DOOR_OPEN_FL 0 "close" 1 "open";
-VAL_ 1568 PARKING 1 "Driving" 2 "Parking";
+VAL_ 1568 PARKING_LIGHT 1 "Driving" 2 "Parking";
 VAL_ 1570 HEADLIGHT_MODE 0 "headlights off" 2 "force parking lights" 4 "force low beams" 7 "auto low beams" 6 "auto parking lights";
 VAL_ 1592 LOCK_STATUS_BD 0 "locked" 1 "unlocked";
 VAL_ 1592 LOCK_STATUS_RL 0 "locked" 1 "unlocked";
