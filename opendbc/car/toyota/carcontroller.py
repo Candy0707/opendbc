@@ -286,7 +286,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD and self.CP.flags & ToyotaFlags.HYBRID.value:
           if self.brake_hold_active and CS.out.standstill and stopping:
             pcm_accel_cmd = 0.0
-            self.permit_braking = False
+            self.standstill_req = False
 
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
@@ -380,13 +380,13 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     brake_pressed = CS.out.brakePressed
     brake_pressed_edge = brake_pressed and not self._prev_brake_pressed
-    
+
     if brake_hold_allowed:
         if self._brake_hold_state == BRAKE_HOLD_IDLE:
             # 踩下煞車 -> 開始計時
             self._brake_hold_state = BRAKE_HOLD_COUNTING
             self._brake_hold_counter = 0
-          
+
         elif self._brake_hold_state == BRAKE_HOLD_COUNTING:
             if not brake_hold_allowed:
                 # 不允許 -> 回 IDLE
@@ -397,18 +397,18 @@ class CarController(CarControllerBase, GasInterceptorCarController):
                 self._brake_hold_counter += 1
                 if self._brake_hold_counter > brake_hold_allowed_timer:
                     self._brake_hold_state = BRAKE_HOLD_ACTIVE
-                  
+
         elif self._brake_hold_state == BRAKE_HOLD_ACTIVE:
             # 再次踩下煞車 -> 解除並重新計時
             if brake_pressed_edge:
                 self._brake_hold_state = BRAKE_HOLD_COUNTING
                 self._brake_hold_counter = 0
-              
+
     else:
         # brake_hold_allowed 不成立 -> 無條件清除
         self._brake_hold_state = BRAKE_HOLD_IDLE
         self._brake_hold_counter = 0
-    
+
     self.brake_hold_active = self._brake_hold_state == BRAKE_HOLD_ACTIVE
     self._prev_brake_pressed = brake_pressed
 
