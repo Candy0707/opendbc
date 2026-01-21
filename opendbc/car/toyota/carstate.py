@@ -57,6 +57,7 @@ class CarState(CarStateBase, CarStateExt):
     self.secoc_synchronization = None
 
     self.pre_collision_2 = {}
+    self.steering_lta = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
@@ -218,6 +219,9 @@ class CarState(CarStateBase, CarStateExt):
     ret.buttonEvents = buttonEvents
 
     self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
+    if self.CP.steerControlType == SteerControlType.angle:
+      self.steering_lta = copy.copy(cp_cam.vl["STEERING_LTA"])
+
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 

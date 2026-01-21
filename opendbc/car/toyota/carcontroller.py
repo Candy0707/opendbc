@@ -171,7 +171,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
       # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
       torque_wind_down = 100 if lta_active and full_torque_condition else 0
-      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
+      can_sends.append(toyotacan.create_lta_steer_command(self.packer, CS.steering_lta, self.last_angle,
                                                           lta_active, self.frame // 2, torque_wind_down))
 
       if self.CP.flags & ToyotaFlags.SECOC.value:
@@ -229,7 +229,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
         # internal PCM gas command can get stuck unwinding from negative accel so we apply a generous rate limit
         pcm_accel_cmd = actuators.accel
-
         if CC.longActive:
           pcm_accel_cmd = rate_limit(pcm_accel_cmd, self.prev_accel, ACCEL_WINDDOWN_LIMIT, ACCEL_WINDUP_LIMIT)
         self.prev_accel = pcm_accel_cmd
@@ -281,13 +280,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
           self.permit_braking = True
         elif net_acceleration_request_min > 0.3:
           self.permit_braking = False
-
-        #AutoHoltStop_ACC(HyBrid)
-        #改由 AutoHold 接手煞車
-        if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD and self.CP.flags & ToyotaFlags.HYBRID.value:
-          if self.brake_hold_active and CS.out.standstill and stopping:
-            pcm_accel_cmd = 0.0
-            self.standstill_req = False
 
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
