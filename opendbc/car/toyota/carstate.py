@@ -57,7 +57,6 @@ class CarState(CarStateBase, CarStateExt):
     self.secoc_synchronization = None
 
     self.pre_collision_2 = {}
-    self.steering_lta = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
     cp = can_parsers[Bus.pt]
@@ -77,7 +76,6 @@ class CarState(CarStateBase, CarStateExt):
 
     ret.brakePressed = cp.vl["BRAKE_MODULE"]["BRAKE_PRESSED"] != 0
     ret.brakeHoldActive = cp.vl["ESP_CONTROL"]["BRAKE_HOLD_ACTIVE"] == 1
-    ret.stockLkas = cp_cam.vl["LKAS_HUD"]["LTA_ENABLED"] == 1
 
     if self.CP.flags & ToyotaFlags.SECOC.value:
       self.secoc_synchronization = copy.copy(cp.vl["SECOC_SYNCHRONIZATION"])
@@ -190,6 +188,7 @@ class CarState(CarStateBase, CarStateExt):
 
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
+      ret.stockLkas = cp_cam.vl["LKAS_HUD"]["RIGHT_LINE"] == 3 or cp_cam.vl["LKAS_HUD"]["LEFT_LINE"] == 3
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]
@@ -219,9 +218,6 @@ class CarState(CarStateBase, CarStateExt):
     ret.buttonEvents = buttonEvents
 
     self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
-    if self.CP.steerControlType == SteerControlType.angle:
-      self.steering_lta = copy.copy(cp_cam.vl["STEERING_LTA"])
-
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 
