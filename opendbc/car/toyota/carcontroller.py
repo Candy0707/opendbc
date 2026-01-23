@@ -210,7 +210,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.last_standstill = CS.out.standstill
 
     if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC))
+      can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -229,7 +229,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
         # internal PCM gas command can get stuck unwinding from negative accel so we apply a generous rate limit
         pcm_accel_cmd = actuators.accel
-
         if CC.longActive:
           pcm_accel_cmd = rate_limit(pcm_accel_cmd, self.prev_accel, ACCEL_WINDDOWN_LIMIT, ACCEL_WINDUP_LIMIT)
         self.prev_accel = pcm_accel_cmd
@@ -281,13 +280,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
           self.permit_braking = True
         elif net_acceleration_request_min > 0.3:
           self.permit_braking = False
-
-        #AutoHoltStop_ACC(HyBrid)
-        #改由 AutoHold 接手煞車
-        if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD and self.CP.flags & ToyotaFlags.HYBRID.value:
-          if self.brake_hold_active and CS.out.standstill and stopping:
-            pcm_accel_cmd = 0.0
-            self.standstill_req = False
 
         pcm_accel_cmd = pcm_accel_cmd if self.CP.carFingerprint in TSS2_CAR else actuators.accel
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
@@ -354,7 +346,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.frame += 1
     return new_actuators, can_sends
 
-# auto brake hold (https://github.com/AlexandreSato/)
+  # auto brake hold (https://github.com/AlexandreSato/)
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
     can_sends = []
     gear = CS.out.gearShifter == GearShifter.drive
@@ -373,11 +365,9 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     speed_enabled = True if not speedlock else self._speed_gear_lock
 
-    cruise_enabled = CS.out.cruiseState.enabled and acc_stopping and acc_accel
-
     cruise_disabled = not CS.out.cruiseState.enabled and speed_enabled
 
-    brake_hold_allowed =  standstill_ok and (cruise_enabled or cruise_disabled)
+    brake_hold_allowed =  standstill_ok and cruise_disabled
 
     brake_pressed = CS.out.brakePressed
     brake_pressed_edge = brake_pressed and not self._prev_brake_pressed
