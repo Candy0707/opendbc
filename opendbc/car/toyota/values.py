@@ -46,7 +46,7 @@ class CarControllerParams:
       self.STEER_DELTA_UP = 15       # 1.0s time to peak torque
       self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
     else:
-      self.STEER_DELTA_UP = 10       # 1.5s time to peak torque
+      self.STEER_DELTA_UP = 20       # 1.5s time to peak torque
       self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
 
 
