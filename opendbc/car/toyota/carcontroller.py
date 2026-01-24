@@ -210,7 +210,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.last_standstill = CS.out.standstill
 
     if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      can_sends.extend(self.create_auto_brake_hold_messages(CS, CC))
+      can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
