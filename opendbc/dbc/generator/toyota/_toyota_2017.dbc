@@ -231,7 +231,8 @@ BO_ 865 CLUTCH: 8 XXX
  SG_ CLUTCH_RELEASED : 38|1@0+ (1,0) [0|1] "" XXX
  SG_ BRAKE : 39|1@0+ (1,0) [0|1] "" XXX
  SG_ CRUISE_SET_SPEED : 47|8@0+ (1,0) [0|255] "km/h" XXX
- SG_ ACCEL_NET : 48|16@1+ (0.0002,-6.5536) [-6.5536|6.5534] "" XXX
+ SG_ SPEED_ALT : 55|8@0- (1,0) [0|255] "km/h" XXX
+ SG_ Voltage : 63|8@0+ (0.1,0) [0|255] "V" XXX
 
 BO_ 869 DSU_CRUISE: 7 DSU
  SG_ MAIN_ON : 0|1@0+ (1,0) [0|0] "" XXX
@@ -583,7 +584,6 @@ CM_ SG_ 835 ACCEL_CMD_ALT "Copy of main ACCEL_CMD, but across 8 bits instead of 
 CM_ SG_ 865 GAS_PEDAL_ALT "copy of main GAS_PEDAL. Both use 8 bits. Might indicate that this message is for pedals.";
 CM_ SG_ 865 ACC_FAULTED "1 when ACC is faulted and the PCM disallows engagement. Also describes a lockout when the ACC_CONTROL->ACC_MALFUNCTION bit is set.";
 CM_ SG_ 865 CLUTCH_RELEASED "boolean of clutch for 6MT.";
-CM_ SG_ 865 ACCEL_NET "net positive acceleration (gas) applied by the system if on flat ground, may not include creeping force";
 CM_ SG_ 921 TEMP_ACC_FAULTED "1 when the UI is displaying or playing fault-related alerts or sounds. Also 1 when pressing main on.";
 CM_ SG_ 921 UI_SET_SPEED "set speed shown in the vehicle's UI with the vehicle's unit";
 CM_ SG_ 951 BRAKE_LIGHTS_ACC "brake lights when ACC commands decel";
