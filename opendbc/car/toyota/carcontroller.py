@@ -217,6 +217,9 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         else:
           can_sends.append(toyotacan.create_brake_hold_command(self.packer, self.frame, CS.pre_collision_2, False))
 
+    if self.frame % 10 == 0 and CS.out.cruiseState.enabled:
+      can_sends.append(toyotacan.create_clutch_command(self.packer))
+
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
     steer_alert = hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw)

@@ -29,7 +29,7 @@
   /* radar diagnostic address */       \
   {0x750, 0, 8, .check_relay = false}, \
   /* ACC */                            \
-  {0x343, 0, 8, .check_relay = true},  \
+  {0x343, 0, 8, .check_relay = true}, {0x361, 0, 8, .check_relay = false},  \
 
 #define TOYOTA_COMMON_SECOC_LONG_TX_MSGS \
   TOYOTA_COMMON_SECOC_TX_MSGS \

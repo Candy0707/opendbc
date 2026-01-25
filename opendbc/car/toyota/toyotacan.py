@@ -144,7 +144,6 @@ def create_fcw_command(packer, fcw):
   }
   return packer.make_can_msg("PCS_HUD", 0, values)
 
-
 def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, mads, stock_lkas_hud):
   depart_ALERT = left_lane_depart or right_lane_depart
   values = {
@@ -191,6 +190,12 @@ def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_dep
       "LANE_SWAY_TOGGLE",
     ]})
   return packer.make_can_msg("LKAS_HUD", 0, values)
+
+def create_clutch_command(packer):
+  values = {
+    "CRUISE_RES_BTN": 1,
+  }
+  return packer.make_can_msg("CLUTCH", 0, values)
 
 
 def toyota_checksum(address: int, sig, d: bytearray) -> int:
