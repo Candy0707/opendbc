@@ -170,7 +170,6 @@ def create_cruise_buttons(packer, stock_clutch, accel, decel):
       "BRAKE",
       "CRUISE_SET_SPEED",
       "SPEED_ALT",
-      "Voltage",
     ]})
 
     values.update({
