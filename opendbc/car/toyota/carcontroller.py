@@ -13,6 +13,7 @@ from opendbc.car.toyota.values import CAR, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         UNSUPPORTED_DSU_CAR
 from opendbc.can import CANPacker
 
+from opendbc.sunnypilot.car.toyota.icbm import IntelligentCruiseButtonManagementInterface
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
 
 Ecu = structs.CarParams.Ecu
@@ -50,9 +51,10 @@ def get_long_tune(CP, params):
                        rate=1 / (DT_CTRL * 3))
 
 
-class CarController(CarControllerBase, GasInterceptorCarController):
+class CarController(CarControllerBase, IntelligentCruiseButtonManagementInterface, GasInterceptorCarController):
   def __init__(self, dbc_names, CP, CP_SP):
     CarControllerBase.__init__(self, dbc_names, CP, CP_SP)
+    IntelligentCruiseButtonManagementInterface.__init__(self, CP, CP_SP)
     GasInterceptorCarController.__init__(self, CP, CP_SP)
     self.params = CarControllerParams(self.CP)
     self.last_torque = 0
@@ -291,6 +293,15 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         else:
           can_sends.append(toyotacan.create_accel_command(self.packer, 0, pcm_cancel_cmd, True, False, lead, CS.acc_type, False, self.distance_button))
 
+    # 測試用程式碼: 每隔一段時間按下加減速按鈕
+    if self.frame % 100 == 0 and CS.out.cruiseState.enabled:
+      can_sends.append(toyotacan.create_cruise_buttons(self.packer, CS.stock_clutch, accel=False, decel=True))
+
+    if self.frame % 200 == 0 and CS.out.cruiseState.enabled:
+      can_sends.append(toyotacan.create_cruise_buttons(self.packer, CS.stock_clutch, accel=True, decel=False))
+
+    # Intelligent Cruise Button Management
+    can_sends.extend(IntelligentCruiseButtonManagementInterface.update(self, CS, CC_SP, self.packer, self.frame))
     can_sends.extend(GasInterceptorCarController.create_gas_command(self, CC, CS, actuators, self.packer, self.frame))
 
     # *** hud ui ***

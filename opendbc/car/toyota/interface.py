@@ -221,6 +221,9 @@ class CarInterface(CarInterfaceBase):
     else:
       stock_cp.safetyConfigs[0].safetyParam &= ~ToyotaSafetyFlags.STOCK_LONGITUDINAL.value
 
+    if candidate in TSS2_CAR:
+      ret.intelligentCruiseButtonManagementAvailable = True
+
     return ret
 
   @staticmethod

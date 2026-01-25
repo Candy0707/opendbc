@@ -53,6 +53,8 @@ class CarState(CarStateBase, CarStateExt):
 
     self.acc_type = 1
     self.lkas_hud = {}
+    self.stock_clutch = {}
+
     self.gvc = 0.0
     self.secoc_synchronization = None
 
@@ -180,6 +182,9 @@ class CarState(CarStateBase, CarStateExt):
 
     if self.CP.carFingerprint != CAR.TOYOTA_PRIUS_V:
       self.lkas_hud = copy.copy(cp_cam.vl["LKAS_HUD"])
+
+    if self.CP.carFingerprint in TSS2_CAR:
+      self.stock_clutch = copy.copy(cp.vl["CLUTCH"])
 
     if self.CP.carFingerprint not in UNSUPPORTED_DSU_CAR:
       self.pcm_follow_distance = cp.vl["PCM_CRUISE_2"]["PCM_FOLLOW_DISTANCE"]

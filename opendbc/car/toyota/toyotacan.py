@@ -154,6 +154,31 @@ def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_dep
 
   return packer.make_can_msg("LKAS_HUD", 0, values)
 
+def create_cruise_buttons(packer, stock_clutch, accel, decel):
+  if len(stock_clutch):
+    values = ({s: stock_clutch[s] for s in [
+      "REVERSE",
+      "CRUISE_ACTIVE",
+      "CRUISE_ENABLED",
+      "CRUISE_CANCEL_BTN",
+      "CRUISE_RES_BTN",
+      "CRUISE_SET_BTN",
+      "SPEED",
+      "GAS_PEDAL_ALT",
+      "ACC_FAULTED",
+      "CLUTCH_RELEASED",
+      "BRAKE",
+      "CRUISE_SET_SPEED",
+      "SPEED_ALT",
+      "Voltage",
+    ]})
+
+    values.update({
+      "CRUISE_RES_BTN": accel,
+      "CRUISE_SET_BTN": decel,
+    })
+  return packer.make_can_msg("CLUTCH", 0, values)
+
 
 def toyota_checksum(address: int, sig, d: bytearray) -> int:
   s = len(d)
