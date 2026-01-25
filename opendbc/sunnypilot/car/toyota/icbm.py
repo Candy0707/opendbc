@@ -14,16 +14,36 @@ from opendbc.sunnypilot.car.intelligent_cruise_button_management_interface_base 
 ButtonType = structs.CarState.ButtonEvent.Type
 SendButtonState = structs.IntelligentCruiseButtonManagement.SendButtonState
 
+EVERY_3_MIN = 100 * 180        # 18000
+HZ_15_DIV = 7                 # ~15 Hz
+SEND_COUNT = 8
 
 class IntelligentCruiseButtonManagementInterface(IntelligentCruiseButtonManagementInterfaceBase):
   def __init__(self, CP, CP_SP):
     super().__init__(CP, CP_SP)
+
+    self.dec_counter = 0
+    self.dec_active = False
 
   def update(self, CS, CC_SP, packer, frame) -> list[CanData]:
     can_sends = []
     self.CC_SP = CC_SP
     self.ICBM = CC_SP.intelligentCruiseButtonManagement
     self.frame = frame
+
+    # 每 3 分鐘啟動一次
+    if self.frame % EVERY_3_MIN == 0:
+      self.dec_active = True
+      self.dec_counter = 0
+
+    # 啟動後，以 15 Hz 送 8 次
+    if self.dec_active:
+      if self.frame % HZ_15_DIV == 0:
+        can_sends.append(toyotacan.create_cruise_buttons(self.packer, CS.stock_clutch, accel=False, decel=True))
+        self.dec_counter += 1
+
+        if self.dec_counter >= SEND_COUNT:
+            self.dec_active = False
 
     if self.ICBM.sendButton != SendButtonState.none:
       accel = self.ICBM.sendButton == SendButtonState.increase
