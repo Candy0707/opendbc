@@ -14,8 +14,8 @@ from opendbc.sunnypilot.car.intelligent_cruise_button_management_interface_base 
 ButtonType = structs.CarState.ButtonEvent.Type
 SendButtonState = structs.IntelligentCruiseButtonManagement.SendButtonState
 
-EVERY_3_MIN = 100 * 180        # 18000
-HZ_15_DIV = 7                 # ~15 Hz
+EVERY_3_MIN = 100 * 30
+HZ_15_DIV = 7 
 SEND_COUNT = 8
 
 class IntelligentCruiseButtonManagementInterface(IntelligentCruiseButtonManagementInterfaceBase):
