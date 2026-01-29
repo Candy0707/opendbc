@@ -84,7 +84,7 @@ class RadarInterface(RadarInterfaceBase):
           self.pts[ii].vRel = cpt['REL_SPEED']
           self.pts[ii].aRel = float('nan')
           self.pts[ii].yvRel = float('nan')
-          self.pts[ii].measured = bool(cpt['VALID'])
+          self.pts[ii].measured = bool(cpt['VALID']) and score > 50
         else:
           if ii in self.pts:
             del self.pts[ii]
