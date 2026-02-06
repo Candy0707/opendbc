@@ -20,7 +20,7 @@
   TOYOTA_COMMON_TX_MSGS \
   /* DSU bus 0 */ \
   {0x283, 0, 7, .check_relay = false}, {0x2E6, 0, 8, .check_relay = false}, {0x2E7, 0, 8, .check_relay = false}, {0x33E, 0, 7, .check_relay = false}, \
-  {0x344, 0, 8, .check_relay = false, .disable_static_blocking = true}, {0x365, 0, 7, .check_relay = false}, {0x366, 0, 7, .check_relay = false}, {0x4CB, 0, 8, .check_relay = false}, \
+  {0x344, 0, 8, .check_relay = false}, {0x365, 0, 7, .check_relay = false}, {0x366, 0, 7, .check_relay = false}, {0x4CB, 0, 8, .check_relay = false}, \
   /* DSU bus 1 */ \
   {0x128, 1, 6, .check_relay = false}, {0x141, 1, 4, .check_relay = false}, {0x160, 1, 8, .check_relay = false}, {0x161, 1, 7, .check_relay = false}, \
   {0x470, 1, 4, .check_relay = false}, \
@@ -565,7 +565,7 @@ static bool toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // Block AEB when stopped to use as a automatic brakehold
     bool is_aeb_msg = (addr == 0x344);
-    block_msg = (is_aeb_msg && !vehicle_moving && !gas_pressed);
+    block_msg = (is_aeb_msg && (alternative_experience & ALT_EXP_ALLOW_AEB) && !vehicle_moving && !gas_pressed);
   }
 
   return block_msg;
