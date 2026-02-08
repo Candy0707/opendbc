@@ -93,8 +93,8 @@ class CarState(CarStateBase, CarStateExt):
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"],
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
     )
-    ret.vEgoRaw = cp.vl["SPEED"]["SPEED"] * CV.KPH_TO_MS
-    ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
+    ret.vEgo = cp.vl["SPEED"]["SPEED"] * CV.KPH_TO_MS
+    ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgo)
     ret.vEgoCluster = cp.vl["BODY_CONTROL_STATE_2"]["UI_SPEED"] * CV.KPH_TO_MS  # minimum of all the cars
     ret.yawRate = cp.vl["KINEMATICS"]["YAW_RATE"]
     ret.standstill = abs(ret.vEgoRaw) < 1e-3
