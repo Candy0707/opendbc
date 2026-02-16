@@ -210,8 +210,8 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.last_standstill = CS.out.standstill
 
     # auto brake hold
-    if (self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2):
-      if self.frame % 2 == 0:
+    if self.frame % 2 == 0:
+      if self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2 and CS.pre_collision_2:
         if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
           can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
         else:

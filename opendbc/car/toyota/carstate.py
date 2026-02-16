@@ -216,7 +216,8 @@ class CarState(CarStateBase, CarStateExt):
 
     ret.buttonEvents = buttonEvents
 
-    self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
+    if self.CP.flags & ToyotaFlags.TSS2.value:
+      self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 
