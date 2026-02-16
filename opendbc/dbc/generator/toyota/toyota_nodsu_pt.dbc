@@ -90,18 +90,6 @@ BO_ 971 NEW_MSG_3CB: 7 XXX
  SG_ UNKNOWN_2 : 47|8@0+ (1,0) [0|255] "" XXX
  SG_ CHECKSUM : 55|8@0+ (1,0) [0|255] "" XXX
 
-BO_ 987 PARKING_RADAR: 8 CS
- SG_ R_Distance : 28|3@0+ (1,0) [0|7] "" XXX
- SG_ L_Distance : 31|3@0+ (1,0) [0|7] "" XXX
- SG_ R : 33|2@0+ (1,0) [0|1] "" XXX
- SG_ L : 35|2@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_1 : 41|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_2 : 45|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_3 : 47|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_5 : 49|1@0+ (1,0) [0|1] "" XXX
- SG_ ALERT_Volume : 53|2@0+ (1,0) [0|3] "" XXX
- SG_ RADAR_ENABLED : 55|1@0+ (1,0) [0|1] "" XXX
- SG_ NEW_SIGNAL_4 : 63|1@0+ (1,0) [0|1] "" XXX
 
 BO_ 1014 BSM: 8 XXX
  SG_ L_ADJACENT : 0|1@0+ (1,0) [0|1] "" XXX
