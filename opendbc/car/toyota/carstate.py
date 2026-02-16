@@ -93,9 +93,7 @@ class CarState(CarStateBase, CarStateExt):
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RL"],
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
     )
-    ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgo)
     ret.vEgoCluster = ret.vEgo * 1.015  # minimum of all the cars
-    ret.yawRate = cp.vl["KINEMATICS"]["YAW_RATE"]
     ret.standstill = abs(ret.vEgoRaw) < 1e-3
 
     ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]["STEER_ANGLE"] + cp.vl["STEER_ANGLE_SENSOR"]["STEER_FRACTION"]
@@ -176,7 +174,6 @@ class CarState(CarStateBase, CarStateExt):
     ret.cruiseState.nonAdaptive = self.pcm_acc_status in (1, 2, 3, 4, 5, 6)
 
     ret.genericToggle = bool(cp.vl["LIGHT_STALK"]["AUTO_HIGH_BEAM"])
-    ret.espActive = cp.vl["BRAKE"]["VSC_ACTIVE"] != 0
     ret.espDisabled = cp.vl["ESP_CONTROL"]["TC_DISABLED"] != 0
 
     if self.CP.enableBsm:
