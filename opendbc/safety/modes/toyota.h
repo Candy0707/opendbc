@@ -565,7 +565,7 @@ static bool toyota_fwd_hook(int bus_num, int addr) {
   if (bus_num == 2) {
     // Block AEB when stopped to use as a automatic brakehold
     bool is_aeb_msg = (addr == 0x344);
-    block_msg = (is_aeb_msg && (alternative_experience & ALT_EXP_ALLOW_AEB) && !vehicle_moving && !gas_pressed);
+    block_msg = (is_aeb_msg && !vehicle_moving && !gas_pressed);
   }
 
   return block_msg;
