@@ -339,6 +339,7 @@ BO_ 1020 SOLAR_SENSOR: 8 XXX
  SG_ LUX_SENSOR : 55|13@0+ (1,0) [0|0] "" XXX
 
 BO_ 1041 PCS_HUD: 8 DSU
+ SG_ PCS_FAULT : 3|1@0+ (1,0) [0|1] "" XXX
  SG_ FCW : 4|1@0+ (1,0) [0|1] "" XXX
  SG_ PCS_INDICATOR : 7|2@0+ (1,0) [0|3] "" XXX
  SG_ SET_ME_X20 : 15|8@0+ (1,0) [0|1] "" XXX
