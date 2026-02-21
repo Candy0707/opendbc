@@ -132,6 +132,11 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       apply_torque = 0
 
     # *** steer angle ***
+    if self.CP.flags & ToyotaFlags.ANGLE_CONTROL.value and CS.out.vego > 10:
+      self.CP.steerControlType = SteerControlType.angle
+    else:
+      self.CP.steerControlType = SteerControlType.torque
+
     if self.CP.steerControlType == SteerControlType.angle:
       # If using LTA control, disable LKA and set steering angle command
       apply_torque = 0
