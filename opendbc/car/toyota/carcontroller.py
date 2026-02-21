@@ -132,7 +132,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       apply_torque = 0
 
     # *** steer angle ***
-    if self.CP.flags & ToyotaFlags.ANGLE_CONTROL.value and CS.out.vego > 10:
+    if self.CP.flags & ToyotaFlags.ANGLE_CONTROL.value and CS.out.vEgo > 10:
       self.CP.steerControlType = SteerControlType.angle
     else:
       self.CP.steerControlType = SteerControlType.torque
