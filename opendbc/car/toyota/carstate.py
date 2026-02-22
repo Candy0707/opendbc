@@ -56,6 +56,8 @@ class CarState(CarStateBase, CarStateExt):
     self.gvc = 0.0
     self.secoc_synchronization = None
 
+    self.steering_lka = {}
+    self.steering_lta = {}
     self.pre_collision_2 = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
@@ -65,6 +67,10 @@ class CarState(CarStateBase, CarStateExt):
     ret = structs.CarState()
     ret_sp = structs.CarStateSP()
     cp_acc = cp_cam if self.CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR) else cp
+
+    self.steering_lka = copy.copy(cp_cam.vl["STEERING_LKA"])
+    if self.CP.flags & ToyotaFlags.TSS2.value:
+      self.steering_lta = copy.copy(cp_cam.vl["STEERING_LTA"])
 
     if not self.CP.flags & ToyotaFlags.SECOC.value:
       self.gvc = cp.vl["VSC1S07"]["GVC"]

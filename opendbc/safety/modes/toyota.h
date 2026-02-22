@@ -318,9 +318,9 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
         }
 
         // TORQUE_WIND_DOWN can only be no or full torque
-        if ((torque_wind_down != 0) && (torque_wind_down != 100)) {
-          tx = false;
-        }
+        // if ((torque_wind_down != 0) && (torque_wind_down != 100)) {
+        //   tx = false;
+        // }
 
         // check if we should wind down torque
         int driver_torque = SAFETY_MIN(SAFETY_ABS(torque_driver.min), SAFETY_ABS(torque_driver.max));
