@@ -17,19 +17,16 @@ def create_steer_command(packer, steer, steer_req):
 def create_lta_steer_command(packer, stock, steer_angle, steer_req, frame, torque_wind_down):
   """Creates a CAN message for the Toyota LTA Steer Command."""
 
-  values = {
+  # 直接在建立字典時就處理 stock
+  values = dict(stock) if stock else {}
+
+  values.update ({
     "COUNTER": frame + 128,
-    "SETME_X1": stock["SETME_X1"],  # suspected LTA feature availability
-    # 1 for TSS 2.5 cars, 3 for TSS 2.0. Send based on whether we're using LTA for lateral control
-    "SETME_X3": stock["SETME_X3"],
-    "PERCENTAGE": stock["PERCENTAGE"],
-    "TORQUE_WIND_DOWN": stock["TORQUE_WIND_DOWN"],
-    "ANGLE": stock["ANGLE"],
     "STEER_ANGLE_CMD": steer_angle,
     "STEER_REQUEST": steer_req,
     "STEER_REQUEST_2": steer_req,
     "CLEAR_HOLD_STEERING_ALERT": 0,
-  }
+  })
   return packer.make_can_msg("STEERING_LTA", 0, values)
 
 
