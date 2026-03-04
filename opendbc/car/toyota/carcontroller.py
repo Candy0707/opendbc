@@ -15,6 +15,7 @@ from opendbc.can import CANPacker
 
 from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
+from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 
 Ecu = structs.CarParams.Ecu
 LongCtrlState = structs.CarControl.Actuators.LongControlState
@@ -37,7 +38,7 @@ MAX_PITCH_COMPENSATION = 1.5  # m/s^2
 # LKA limits
 # EPS faults if you apply torque while the steering rate is above 100 deg/s for too long
 MAX_STEER_RATE = 100  # deg/s
-MAX_STEER_RATE_FRAMES = 18  # tx control frames needed before torque can be cut
+MAX_STEER_RATE_FRAMES = 17  # tx control frames needed before torque can be cut
 
 # EPS allows user torque above threshold for 50 frames before permanently faulting
 MAX_USER_TORQUE = 500
@@ -188,7 +189,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # on entering standstill, send standstill request for older TSS-P cars that aren't designed to stay engaged at a stop
     if self.CP.carFingerprint not in NO_STOP_TIMER_CAR or self.CP_SP.enableGasInterceptor:
-      if CS.out.standstill and not self.last_standstill:
+      if CS.out.standstill and not self.last_standstill and not self.CP_SP.flags & ToyotaFlagsSP.STOP_AND_GO_HACK:
         self.standstill_req = True
       if CS.pcm_acc_status != 8:
         # pcm entered standstill or it's disabled

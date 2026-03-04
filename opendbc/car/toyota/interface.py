@@ -80,25 +80,7 @@ class CarInterface(CarInterfaceBase):
       # https://engage.toyota.com/static/images/toyota_safety_sense/TSS_Applicability_Chart.pdf
       stop_and_go = candidate != CAR.TOYOTA_AVALON
 
-    elif candidate in (CAR.TOYOTA_RAV4_TSS2, CAR.TOYOTA_RAV4_TSS2_2022, CAR.TOYOTA_RAV4_TSS2_2023, CAR.TOYOTA_RAV4_PRIME, CAR.TOYOTA_SIENNA_4TH_GEN):
-      ret.lateralTuning.init('pid')
-      ret.lateralTuning.pid.kiBP = [0.0]
-      ret.lateralTuning.pid.kpBP = [0.0]
-      ret.lateralTuning.pid.kpV = [0.6]
-      ret.lateralTuning.pid.kiV = [0.1]
-      ret.lateralTuning.pid.kf = 0.00007818594
-
-
-      # 2019+ RAV4 TSS2 uses two different steering racks and specific tuning seems to be necessary.
-      # See https://github.com/commaai/openpilot/pull/21429#issuecomment-873652891
-      for fw in car_fw:
-        if fw.ecu == "eps" and (fw.fwVersion.startswith(b'\x02') or fw.fwVersion in [b'8965B42181\x00\x00\x00\x00\x00\x00']):
-          ret.lateralTuning.pid.kpV = [0.15]
-          ret.lateralTuning.pid.kiV = [0.05]
-          ret.lateralTuning.pid.kf = 0.00004
-          break
-
-    elif candidate in (CAR.TOYOTA_CHR, CAR.TOYOTA_CAMRY, CAR.TOYOTA_SIENNA, CAR.LEXUS_CTH, CAR.LEXUS_NX):
+    elif candidate in (CAR.TOYOTA_CHR, CAR.TOYOTA_CAMRY, CAR.TOYOTA_SIENNA, CAR.LEXUS_CTH, CAR.LEXUS_LS, CAR.LEXUS_NX):
       # TODO: Some of these platforms are not advertised to have full range ACC, do they really all have sng?
       stop_and_go = True
 
@@ -141,10 +123,9 @@ class CarInterface(CarInterfaceBase):
     if candidate in TSS2_CAR:
       ret.flags |= ToyotaFlags.RAISED_ACCEL_LIMIT.value
 
-      ret.vEgoStopping = 0.25 if candidate == CAR.TOYOTA_COROLLA_TSS2 else 0.25
-      ret.vEgoStarting = 0.01 if candidate == CAR.TOYOTA_COROLLA_TSS2 else 0.25
-      # reach stopping target smoothly
-      ret.stoppingDecelRate = 0.04 if candidate == CAR.TOYOTA_COROLLA_TSS2 else 0.25
+      ret.vEgoStopping = 0.25
+      ret.vEgoStarting = 0.25
+      ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
 
       # Hybrids have much quicker longitudinal actuator response
       if ret.flags & ToyotaFlags.HYBRID.value:
@@ -199,6 +180,7 @@ class CarInterface(CarInterfaceBase):
           stock_cp.flags |= ToyotaFlags.DISABLE_RADAR.value
       else:
         use_sdsu = use_sdsu and alpha_long
+        stock_cp.flags &= ~ToyotaFlags.DISABLE_RADAR.value
 
     # openpilot longitudinal enabled by default:
     #  - non-(TSS2 radar ACC cars) w/ smartDSU installed
@@ -217,10 +199,6 @@ class CarInterface(CarInterfaceBase):
     if ret.enableGasInterceptor:
       ret.safetyParam |= ToyotaSafetyFlagsSP.GAS_INTERCEPTOR
       stock_cp.minEnableSpeed = -1.
-
-    if ret.flags & ToyotaFlagsSP.STOCK_LONGITUDINAL:
-      stock_cp.alphaLongitudinalAvailable = False
-      stock_cp.openpilotLongitudinalControl = False
 
     if not stock_cp.openpilotLongitudinalControl:
       stock_cp.safetyConfigs[0].safetyParam |= ToyotaSafetyFlags.STOCK_LONGITUDINAL.value
