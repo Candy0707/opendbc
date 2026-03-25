@@ -213,8 +213,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     # auto brake hold
     if self.frame % 2 == 0:
       if self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2 and CS.pre_collision_2:
-        if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-          can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
+        can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
     fcw_alert = hud_control.visualAlert == VisualAlert.fcw
@@ -405,5 +404,8 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     self.brake_hold_active = self._brake_hold_state == BRAKE_HOLD_ACTIVE
     self._prev_brake_pressed = brake_pressed
+
+    if not self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      self.brake_hold_active = False
 
     return toyotacan.create_brake_hold_command(self.packer, self.frame, CS.pre_collision_2, self.brake_hold_active)
