@@ -67,7 +67,7 @@ class RadarInterface(RadarInterfaceBase):
         # print ii, self.valid_cnt[ii], score, cpt['VALID'], cpt['LONG_DIST'], cpt['LAT_DIST']
 
         # radar point only valid if it's a valid measurement and score is above 50
-        if cpt['VALID'] and score > 50:
+        if cpt['VALID'] and score > 20:
           if ii not in self.pts:
             self.pts[ii] = RadarData.RadarPoint()
             self.pts[ii].trackId = self.track_id

@@ -88,12 +88,11 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.secoc_acc_message_counter = 0
     self.secoc_prev_reset_counter = 0
 
-    if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      self._brake_hold_state = BRAKE_HOLD_IDLE
-      self.brake_hold_active: bool = False
-      self._brake_hold_counter: int = 0
-      self._prev_brake_pressed: bool = False
-      self._speed_gear_lock = False
+    self._brake_hold_state = BRAKE_HOLD_IDLE
+    self.brake_hold_active: bool = False
+    self._brake_hold_counter: int = 0
+    self._prev_brake_pressed: bool = False
+    self._speed_gear_lock = False
 
   def update(self, CC, CC_SP, CS, now_nanos):
     actuators = CC.actuators
@@ -212,7 +211,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # auto brake hold
     if self.frame % 2 == 0:
-      if self.CP.carFingerprint == CAR.TOYOTA_COROLLA_TSS2 and CS.pre_collision_2:
+      if self.CP.carFingerprint in TSS2_CAR and CS.pre_collision_2:
         can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
