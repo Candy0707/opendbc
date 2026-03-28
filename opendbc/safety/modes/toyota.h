@@ -349,7 +349,7 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
       int desired_torque = (msg->data[1] << 8) | msg->data[2];
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(msg, 0U);
-      if ((desired_torque != 0) || steer_req) {
+      if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_TORQUE_STEERING_LIMITS)) {
         tx = false;
       }
     }
