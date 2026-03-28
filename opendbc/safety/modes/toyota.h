@@ -297,43 +297,38 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
       lta_angle = to_signed(lta_angle, 16);
 
       bool steer_control_enabled = lta_request || lta_request2;
-      if (!toyota_lta) {
-        // using torque (LKA), block LTA msgs with actuation requests
-        if (steer_control_enabled || (lta_angle != 0) || (torque_wind_down != 0)) {
-          tx = false;
-        }
-      } else {
-        // check angle rate limits and inactive angle
-        if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_ANGLE_STEERING_LIMITS)) {
-          tx = false;
-        }
 
-        if (lta_request != lta_request2) {
-          tx = false;
-        }
+      // check angle rate limits and inactive angle
+      if (steer_angle_cmd_checks(lta_angle, steer_control_enabled, TOYOTA_ANGLE_STEERING_LIMITS)) {
+        tx = false;
+      }
 
-        // TORQUE_WIND_DOWN is gated on steer request
-        if (!steer_control_enabled && (torque_wind_down != 0)) {
-          tx = false;
-        }
+      if (lta_request != lta_request2) {
+        tx = false;
+      }
 
-        // TORQUE_WIND_DOWN can only be no or full torque
-        // if ((torque_wind_down != 0) && (torque_wind_down != 100)) {
-        //   tx = false;
-        // }
+      // TORQUE_WIND_DOWN is gated on steer request
+      if (!steer_control_enabled && (torque_wind_down != 0)) {
+        tx = false;
+      }
 
-        // check if we should wind down torque
-        int driver_torque = SAFETY_MIN(SAFETY_ABS(torque_driver.min), SAFETY_ABS(torque_driver.max));
-        if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (torque_wind_down != 0)) {
-          tx = false;
-        }
+      // TORQUE_WIND_DOWN can only be no or full torque
+      if ((torque_wind_down != 0) && (torque_wind_down != 100)) {
+        tx = false;
+      }
 
-        int eps_torque = SAFETY_MIN(SAFETY_ABS(torque_meas.min), SAFETY_ABS(torque_meas.max));
-        if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (torque_wind_down != 0)) {
-          tx = false;
-        }
+      // check if we should wind down torque
+      int driver_torque = SAFETY_MIN(SAFETY_ABS(torque_driver.min), SAFETY_ABS(torque_driver.max));
+      if ((driver_torque > TOYOTA_LTA_MAX_DRIVER_TORQUE) && (torque_wind_down != 0)) {
+        tx = false;
+      }
+
+      int eps_torque = SAFETY_MIN(SAFETY_ABS(torque_meas.min), SAFETY_ABS(torque_meas.max));
+      if ((eps_torque > TOYOTA_LTA_MAX_MEAS_TORQUE) && (torque_wind_down != 0)) {
+        tx = false;
       }
     }
+
 
     // STEERING_LTA_2 angle steering check (SecOC)
     if (toyota_secoc && (msg->addr == 0x131U)) {
@@ -354,17 +349,11 @@ static bool toyota_tx_hook(const CANPacket_t *msg) {
       int desired_torque = (msg->data[1] << 8) | msg->data[2];
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(msg, 0U);
-      // When using LTA (angle control), assert no actuation on LKA message
-      if (!toyota_lta) {
-        if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_TORQUE_STEERING_LIMITS)) {
-          tx = false;
-        }
-      } else {
-        if ((desired_torque != 0) || steer_req) {
-          tx = false;
-        }
+      if ((desired_torque != 0) || steer_req) {
+        tx = false;
       }
     }
+
 
     // GAS PEDAL: safety check
     if (msg->addr == 0x200U) {
