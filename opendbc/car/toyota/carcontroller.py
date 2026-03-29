@@ -13,8 +13,8 @@ from opendbc.car.toyota.values import CAR, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         UNSUPPORTED_DSU_CAR
 from opendbc.can import CANPacker
 
-from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
+from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 
 Ecu = structs.CarParams.Ecu
 LongCtrlState = structs.CarControl.Actuators.LongControlState
@@ -63,7 +63,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.params = CarControllerParams(self.CP)
     self.last_torque = 0
     self.last_angle = 0
-    self.steer_control_type = self.CP.steerControlType
     self.alert_active = False
     self.last_standstill = False
     self.standstill_req = False
@@ -120,12 +119,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         if int(CS.secoc_synchronization['AUTHENTICATOR']) != expected_mac:
           carlog.error("SecOC synchronization MAC mismatch, wrong key?")
 
-    # *** steer type ***
-    if CS.out.vEgo > 22:
-      self.steer_control_type = SteerControlType.angle
-    elif CS.out.vEgo < 16:
-      self.steer_control_type = SteerControlType.torque
-
     # *** steer torque ***
     new_torque = int(round(actuators.torque * self.params.STEER_MAX))
     apply_torque = apply_meas_steer_torque_limits(new_torque, self.last_torque, CS.out.steeringTorqueEps, self.params)
@@ -138,7 +131,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       apply_torque = 0
 
     # *** steer angle ***
-    if self.steer_control_type == SteerControlType.angle:
+    if self.CP.steerControlType == SteerControlType.angle:
       # If using LTA control, disable LKA and set steering angle command
       apply_torque = 0
       apply_steer_req = False
@@ -169,7 +162,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # STEERING_LTA does not seem to allow more rate by sending faster, and may wind up easier
     if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
-      lta_active = lat_active and self.steer_control_type == SteerControlType.angle
+      lta_active = lat_active and self.CP.steerControlType == SteerControlType.angle
       # cut steering torque with TORQUE_WIND_DOWN when either EPS torque or driver torque is above
       # the threshold, to limit max lateral acceleration and for driver torque blending respectively.
       full_torque_condition = (abs(CS.out.steeringTorqueEps) < self.params.STEER_MAX and
@@ -177,7 +170,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
       # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
       torque_wind_down = 100 if lta_active and full_torque_condition else 0
-      can_sends.append(toyotacan.create_lta_steer_command(self.packer, CS.steering_lta, self.last_angle,
+      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
                                                           lta_active, self.frame // 2, torque_wind_down))
 
       if self.CP.flags & ToyotaFlags.SECOC.value:
@@ -354,7 +347,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.frame += 1
     return new_actuators, can_sends
 
-  # auto brake hold (https://github.com/AlexandreSato/openpilot)
+    # auto brake hold (https://github.com/AlexandreSato/openpilot)
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
 
     gear = CS.out.gearShifter == GearShifter.drive
