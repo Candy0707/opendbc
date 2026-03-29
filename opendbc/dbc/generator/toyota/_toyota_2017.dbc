@@ -282,7 +282,7 @@ BO_ 951 ESP_CONTROL: 8 ESP
  SG_ ABS_FAULT : 4|2@0+ (1,0) [0|3] "" XXX
  SG_ BRAKE_FAULT_1 : 6|1@0+ (1,0) [0|1] "" XXX
  SG_ TRC_FAULT : 9|2@0+ (1,0) [0|3] "" XXX
- SG_ VSC_ACTIVE : 10|1@0+ (1,0) [0|1] "" XXX
+ SG_ TRC_ACTIVE : 10|1@0+ (1,0) [0|1] "" XXX
  SG_ VSC_DISABLED : 12|2@0+ (1,0) [0|1] "" XXX
  SG_ TC_DISABLED : 13|1@0+ (1,0) [0|1] "" XXX
  SG_ BRAKE_LIGHTS_ACC : 18|1@0+ (1,0) [0|1] "" XXX
