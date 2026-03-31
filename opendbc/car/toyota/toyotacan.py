@@ -14,19 +14,22 @@ def create_steer_command(packer, steer, steer_req):
   return packer.make_can_msg("STEERING_LKA", 0, values)
 
 
-def create_lta_steer_command(packer, stock, steer_angle, steer_req, frame, torque_wind_down):
+def create_lta_steer_command(packer, steer_control_type, steer_angle, steer_req, frame, torque_wind_down):
   """Creates a CAN message for the Toyota LTA Steer Command."""
 
-  # 直接在建立字典時就處理 stock
-  values = dict(stock) if stock else {}
-
-  values.update ({
+  values = {
     "COUNTER": frame + 128,
+    "SETME_X1": 1,  # suspected LTA feature availability
+    # 1 for TSS 2.5 cars, 3 for TSS 2.0. Send based on whether we're using LTA for lateral control
+    "SETME_X3": 1 if steer_control_type == SteerControlType.angle else 3,
+    "PERCENTAGE": 100,
+    "TORQUE_WIND_DOWN": torque_wind_down,
+    "ANGLE": 0,
     "STEER_ANGLE_CMD": steer_angle,
     "STEER_REQUEST": steer_req,
     "STEER_REQUEST_2": steer_req,
     "CLEAR_HOLD_STEERING_ALERT": 0,
-  })
+  }
   return packer.make_can_msg("STEERING_LTA", 0, values)
 
 
@@ -140,6 +143,7 @@ def create_fcw_command(packer, fcw):
     "PCS_SENSITIVITY": 0,
   }
   return packer.make_can_msg("PCS_HUD", 0, values)
+
 
 def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart, mads, stock_lkas_hud):
   depart_ALERT = left_lane_depart or right_lane_depart
