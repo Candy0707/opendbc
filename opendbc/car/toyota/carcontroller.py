@@ -121,14 +121,10 @@ class CarController(CarControllerBase, GasInterceptorCarController):
           carlog.error("SecOC synchronization MAC mismatch, wrong key?")
 
     # *** steer type ***
-    # 動態切換轉向類，已達到完美控制效果
-    # 高速約80公里開啟角度控制，低速約60公里開啟扭矩控制
     if self.CP.carFingerprint in TSS2_CAR:
-      # if CS.out.vEgo > 22:
-      if CS.out.vEgo > 12: # 43.2 km/k
+      if actuators.steerControlType == structs.CarControl.Actuators.SteerControlType.angle:
         self.steer_control_type = SteerControlType.angle
-      #elif CS.out.vEgo < 16:
-      elif CS.out.vEgo < 6: # 21.6 km/h
+      else:
         self.steer_control_type = SteerControlType.torque
 
     # *** steer torque ***
