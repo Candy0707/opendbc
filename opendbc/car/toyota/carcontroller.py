@@ -61,7 +61,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     CarControllerBase.__init__(self, dbc_names, CP, CP_SP)
     GasInterceptorCarController.__init__(self, CP, CP_SP)
     self.params = CarControllerParams(self.CP)
-    self.steer_control_type = self.CP.steerControlType
     self.last_torque = 0
     self.last_angle = 0
     self.alert_active = False
@@ -120,17 +119,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         if int(CS.secoc_synchronization['AUTHENTICATOR']) != expected_mac:
           carlog.error("SecOC synchronization MAC mismatch, wrong key?")
 
-    # *** steer type ***
-    # 動態切換轉向類，已達到完美控制效果
-    # 高速約80公里開啟角度控制，低速約60公里開啟扭矩控制
-    if self.CP.carFingerprint in TSS2_CAR:
-      # if CS.out.vEgo > 22:
-      if CS.out.vEgo > 12: # 43.2 km/k
-        self.steer_control_type = SteerControlType.angle
-      #elif CS.out.vEgo < 16:
-      elif CS.out.vEgo < 6: # 21.6 km/h
-        self.steer_control_type = SteerControlType.torque
-
     # *** steer torque ***
     new_torque = int(round(actuators.torque * self.params.STEER_MAX))
     apply_torque = apply_meas_steer_torque_limits(new_torque, self.last_torque, CS.out.steeringTorqueEps, self.params)
@@ -143,7 +131,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       apply_torque = 0
 
     # *** steer angle ***
-    if self.steer_control_type == SteerControlType.angle:
+    if self.CP.steerControlType == SteerControlType.angle:
       # If using LTA control, disable LKA and set steering angle command
       apply_torque = 0
       apply_steer_req = False
@@ -155,9 +143,6 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         self.last_angle = apply_std_steer_angle_limits(apply_angle, self.last_angle, CS.out.vEgoRaw,
                                                        CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                                        CC.latActive, self.params.ANGLE_LIMITS)
-    else:
-      # 關鍵修正：在 Torque 模式下，讓 last_angle 追蹤當前實際角度，避免切換瞬間發生突變
-      self.last_angle = CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
     self.last_torque = apply_torque
 
@@ -177,7 +162,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # STEERING_LTA does not seem to allow more rate by sending faster, and may wind up easier
     if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
-      lta_active = lat_active and self.steer_control_type == SteerControlType.angle
+      lta_active = lat_active and self.CP.steerControlType == SteerControlType.angle
       # cut steering torque with TORQUE_WIND_DOWN when either EPS torque or driver torque is above
       # the threshold, to limit max lateral acceleration and for driver torque blending respectively.
       full_torque_condition = (abs(CS.out.steeringTorqueEps) < self.params.STEER_MAX and
@@ -185,7 +170,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
       # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
       torque_wind_down = 100 if lta_active and full_torque_condition else 0
-      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.steer_control_type, self.last_angle,
+      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
                                                           lta_active, self.frame // 2, torque_wind_down))
 
       if self.CP.flags & ToyotaFlags.SECOC.value:
