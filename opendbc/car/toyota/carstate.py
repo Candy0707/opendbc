@@ -56,6 +56,8 @@ class CarState(CarStateBase, CarStateExt):
     self.gvc = 0.0
     self.secoc_synchronization = None
 
+    self.steering_lka = {}
+    self.steering_lta = {}
     self.pre_collision_2 = {}
 
   def update(self, can_parsers) -> tuple[structs.CarState, structs.CarStateSP]:
@@ -65,6 +67,10 @@ class CarState(CarStateBase, CarStateExt):
     ret = structs.CarState()
     ret_sp = structs.CarStateSP()
     cp_acc = cp_cam if self.CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR) else cp
+
+    self.steering_lka = copy.copy(cp_cam.vl["STEERING_LKA"])
+    if self.CP.flags & ToyotaFlags.TSS2.value:
+      self.steering_lta = copy.copy(cp_cam.vl["STEERING_LTA"])
 
     if not self.CP.flags & ToyotaFlags.SECOC.value:
       self.gvc = cp.vl["VSC1S07"]["GVC"]
@@ -94,7 +100,6 @@ class CarState(CarStateBase, CarStateExt):
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
     )
     ret.vEgoCluster = ret.vEgo * 1.015  # minimum of all the cars
-
     ret.standstill = abs(ret.vEgoRaw) < 1e-3
 
     ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]["STEER_ANGLE"] + cp.vl["STEER_ANGLE_SENSOR"]["STEER_FRACTION"]
@@ -175,7 +180,6 @@ class CarState(CarStateBase, CarStateExt):
     ret.cruiseState.nonAdaptive = self.pcm_acc_status in (1, 2, 3, 4, 5, 6)
 
     ret.genericToggle = bool(cp.vl["LIGHT_STALK"]["AUTO_HIGH_BEAM"])
-    ret.espActive = cp.vl["BRAKE"]["VSC_ACTIVE"] != 0
     ret.espDisabled = cp.vl["ESP_CONTROL"]["TC_DISABLED"] != 0
 
     if self.CP.enableBsm:
@@ -218,7 +222,8 @@ class CarState(CarStateBase, CarStateExt):
 
     ret.buttonEvents = buttonEvents
 
-    self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
+    if self.CP.carFingerprint in TSS2_CAR:
+      self.pre_collision_2 = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
 
     CarStateExt.update(self, ret, ret_sp, can_parsers)
 

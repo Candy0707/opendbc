@@ -13,7 +13,6 @@ from opendbc.car.toyota.values import CAR, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         UNSUPPORTED_DSU_CAR
 from opendbc.can import CANPacker
 
-from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 from opendbc.sunnypilot.car.toyota.gas_interceptor import GasInterceptorCarController
 from opendbc.sunnypilot.car.toyota.values import ToyotaFlagsSP
 
@@ -62,6 +61,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     CarControllerBase.__init__(self, dbc_names, CP, CP_SP)
     GasInterceptorCarController.__init__(self, CP, CP_SP)
     self.params = CarControllerParams(self.CP)
+    self.steer_control_type = self.CP.steerControlType
     self.last_torque = 0
     self.last_angle = 0
     self.alert_active = False
@@ -88,12 +88,11 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.secoc_acc_message_counter = 0
     self.secoc_prev_reset_counter = 0
 
-    if CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      self._brake_hold_state = BRAKE_HOLD_IDLE
-      self.brake_hold_active: bool = False
-      self._brake_hold_counter: int = 0
-      self._prev_brake_pressed: bool = False
-      self._speed_gear_lock = False
+    self._brake_hold_state = BRAKE_HOLD_IDLE
+    self.brake_hold_active: bool = False
+    self._brake_hold_counter: int = 0
+    self._prev_brake_pressed: bool = False
+    self._speed_gear_lock = False
 
   def update(self, CC, CC_SP, CS, now_nanos):
     actuators = CC.actuators
@@ -121,6 +120,13 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         if int(CS.secoc_synchronization['AUTHENTICATOR']) != expected_mac:
           carlog.error("SecOC synchronization MAC mismatch, wrong key?")
 
+    # *** steer type ***
+    if self.CP.carFingerprint in TSS2_CAR:
+      if actuators.steerControlType == structs.CarControl.Actuators.SteerControlType.angle:
+        self.steer_control_type = SteerControlType.angle
+      else:
+        self.steer_control_type = SteerControlType.torque
+
     # *** steer torque ***
     new_torque = int(round(actuators.torque * self.params.STEER_MAX))
     apply_torque = apply_meas_steer_torque_limits(new_torque, self.last_torque, CS.out.steeringTorqueEps, self.params)
@@ -133,7 +139,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
       apply_torque = 0
 
     # *** steer angle ***
-    if self.CP.steerControlType == SteerControlType.angle:
+    if self.steer_control_type == SteerControlType.angle:
       # If using LTA control, disable LKA and set steering angle command
       apply_torque = 0
       apply_steer_req = False
@@ -145,6 +151,9 @@ class CarController(CarControllerBase, GasInterceptorCarController):
         self.last_angle = apply_std_steer_angle_limits(apply_angle, self.last_angle, CS.out.vEgoRaw,
                                                        CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg,
                                                        CC.latActive, self.params.ANGLE_LIMITS)
+    else:
+      # 關鍵修正：在 Torque 模式下，讓 last_angle 追蹤當前實際角度，避免切換瞬間發生突變
+      self.last_angle = CS.out.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
     self.last_torque = apply_torque
 
@@ -164,7 +173,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # STEERING_LTA does not seem to allow more rate by sending faster, and may wind up easier
     if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
-      lta_active = lat_active and self.CP.steerControlType == SteerControlType.angle
+      lta_active = lat_active and self.steer_control_type == SteerControlType.angle
       # cut steering torque with TORQUE_WIND_DOWN when either EPS torque or driver torque is above
       # the threshold, to limit max lateral acceleration and for driver torque blending respectively.
       full_torque_condition = (abs(CS.out.steeringTorqueEps) < self.params.STEER_MAX and
@@ -172,7 +181,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
       # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
       torque_wind_down = 100 if lta_active and full_torque_condition else 0
-      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
+      can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.steer_control_type, self.last_angle,
                                                           lta_active, self.frame // 2, torque_wind_down))
 
       if self.CP.flags & ToyotaFlags.SECOC.value:
@@ -189,7 +198,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     # on entering standstill, send standstill request for older TSS-P cars that aren't designed to stay engaged at a stop
     if self.CP.carFingerprint not in NO_STOP_TIMER_CAR or self.CP_SP.enableGasInterceptor:
-      if CS.out.standstill and not self.last_standstill and not self.CP_SP.flags & ToyotaFlagsSP.STOP_AND_GO_HACK:
+      if CS.out.standstill and not self.last_standstill and (self.CP_SP.enableGasInterceptor or not self.CP_SP.flags & ToyotaFlagsSP.STOP_AND_GO_HACK):
         self.standstill_req = True
       if CS.pcm_acc_status != 8:
         # pcm entered standstill or it's disabled
@@ -210,8 +219,9 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     self.last_standstill = CS.out.standstill
 
-    if self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
-      if self.frame % 2 == 0:
+    # auto brake hold
+    if self.frame % 2 == 0:
+      if self.CP.carFingerprint in TSS2_CAR and CS.pre_collision_2:
         can_sends.append(self.create_auto_brake_hold_messages(CS, CC))
 
     # handle UI messages
@@ -348,7 +358,7 @@ class CarController(CarControllerBase, GasInterceptorCarController):
     self.frame += 1
     return new_actuators, can_sends
 
-  # auto brake hold (https://github.com/AlexandreSato/)
+    # auto brake hold (https://github.com/AlexandreSato/openpilot)
   def create_auto_brake_hold_messages(self, CS: structs.CarState, CC: structs.CarControl, brake_hold_allowed_timer: int = 100):
 
     gear = CS.out.gearShifter == GearShifter.drive
@@ -403,5 +413,8 @@ class CarController(CarControllerBase, GasInterceptorCarController):
 
     self.brake_hold_active = self._brake_hold_state == BRAKE_HOLD_ACTIVE
     self._prev_brake_pressed = brake_pressed
+
+    if not self.CP_SP.flags & ToyotaFlagsSP.SP_AUTO_BRAKE_HOLD:
+      self.brake_hold_active = False
 
     return toyotacan.create_brake_hold_command(self.packer, self.frame, CS.pre_collision_2, self.brake_hold_active)
