@@ -101,6 +101,7 @@ class CarState(CarStateBase, CarStateExt):
       cp.vl["WHEEL_SPEEDS"]["WHEEL_SPEED_RR"],
     )
     ret.vEgoCluster = ret.vEgo * 1.015  # minimum of all the cars
+
     ret.standstill = abs(ret.vEgoRaw) < 1e-3
 
     ret.vehicleSensorsInvalid = any(cp.vl["WHEEL_SPEEDS"][f"WHEEL_SPEED_{whl}_FAULT"]
