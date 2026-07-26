@@ -1,4 +1,3 @@
-
 import copy
 
 from opendbc.can import CANDefine, CANParser
